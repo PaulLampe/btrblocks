@@ -22,6 +22,8 @@ void TestHelper::CheckRelationCompression(Relation &relation, RelationCompressor
       ASSERT_GE(db_meta.compression_ratio, 0.95);
       cout << "db_meta.compression_ratio  = " << db_meta.compression_ratio << endl;
 
+      cout << "Top Level Compression Scheme:  " << ConvertSchemeTypeToString((IntegerSchemeType) db_meta.used_compression_schemes[0]) << endl;
+
       auto decompressed_chunk = compressor.decompress(compressed_chunks[chunk_i]);
       ASSERT_TRUE(decompressed_chunk == chunk);
    }

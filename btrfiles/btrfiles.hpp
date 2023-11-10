@@ -4,6 +4,7 @@
 #include "storage/Relation.hpp"
 // ------------------------------------------------------------------------------
 #include <yaml-cpp/yaml.h>
+#include <arrow/api.h>
 // ------------------------------------------------------------------------------
 // This library uses YAML files to store the schema of a table.
 //
@@ -46,6 +47,8 @@ Relation readDirectory(const YAML::Node& schema, const string& columns_dir, cons
 /// Given a YAML schema, parse the given csv file and write uncompressed (!)
 /// binary files to the given output directory.
 void convertCSV(const string csv_path, const YAML::Node &schema, const string &out_dir, const string &csv_separator = "|");
+
+Relation readArrowTable(std::shared_ptr<arrow::Table>& table);
 // ------------------------------------------------------------------------------
 } // namespace btrblocks::files
 // ------------------------------------------------------------------------------

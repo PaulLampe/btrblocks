@@ -30,8 +30,7 @@ if (CMAKE_BUILD_TYPE MATCHES Debug)
     target_compile_options(btrfiles PUBLIC -g)
 endif ()
 
-
-target_link_libraries(btrfiles btrblocks yaml csv-parser) #asan
+target_link_libraries(btrfiles PUBLIC btrblocks yaml csv-parser PRIVATE Arrow) #asan
 
 set(BTRFILES_PUBLIC_INCLUDE_DIR ${CMAKE_CURRENT_LIST_DIR})
 set(BTRFILES_PRIVATE_INCLUDE_DIR ${BTR_INCLUDE_DIR})
