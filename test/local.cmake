@@ -16,7 +16,7 @@ file(GLOB_RECURSE TEST_CASES ${BTR_TEST_CASES_DIR}/**.cpp ${BTR_TEST_CASES_DIR}/
 # ---------------------------------------------------------------------------
 
 add_executable(tester ${BTR_TEST_DIR}/tester.cpp ${TEST_CASES})
-target_link_libraries(tester btrblocks gtest gmock Threads::Threads)
+target_link_libraries(tester btrblocks gtest gmock Threads::Threads Arrow)
 target_include_directories(tester PRIVATE ${BTR_INCLUDE_DIR})
 target_include_directories(tester PRIVATE ${BTR_TEST_DIR})
 

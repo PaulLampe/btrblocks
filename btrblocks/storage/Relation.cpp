@@ -156,39 +156,6 @@ InputChunk Relation::getInputChunk(const Range& range,
                   chunk_tuple_count * sizeof(INTEGER));
       break;
     }
-    case ColumnType::DOUBLE: {
-      size = chunk_tuple_count * sizeof(DOUBLE);
-      data = std::unique_ptr<u8[]>(new u8[size]);
-      std::memcpy(reinterpret_cast<void*>(data.get()), columns[column].doubles().data + offset,
-                  chunk_tuple_count * sizeof(DOUBLE));
-      break;
-    }
-    case ColumnType::STRING: {
-      const u64 slots_size = sizeof(StringArrayViewer::Slot) * (chunk_tuple_count + 1);
-      // -------------------------------------------------------------------------------------
-      const StringIndexSlot* source_slots = columns[column].strings().data->slot;
-
-      const u64 strings_size =
-          (source_slots[offset + chunk_tuple_count - 1].offset - source_slots[offset].offset) +
-          source_slots[offset + chunk_tuple_count - 1].size;
-      // -------------------------------------------------------------------------------------
-      size = slots_size + strings_size;
-      data = std::unique_ptr<u8[]>(new u8[size]);
-      // -------------------------------------------------------------------------------------
-      auto dest_slots = reinterpret_cast<StringArrayViewer::Slot*>(data.get());
-      // -------------------------------------------------------------------------------------
-      const u64 bias = source_slots[offset].offset - slots_size;
-      for (u64 slot_index = 0; slot_index < chunk_tuple_count; slot_index++) {
-        dest_slots[slot_index].offset = source_slots[slot_index + offset].offset - bias;
-      }
-      dest_slots[chunk_tuple_count].offset = size;
-      // -------------------------------------------------------------------------------------
-      // copy the strings
-      std::memcpy(reinterpret_cast<void*>(data.get() + slots_size),
-                  columns[column].strings()[offset].data(), strings_size);
-      // -------------------------------------------------------------------------------------
-      break;
-    }
     default:
       throw Generic_Exception("Type not implemented");
   }

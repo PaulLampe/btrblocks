@@ -24,6 +24,7 @@
 namespace btrblocks {
 // -------------------------------------------------------------------------------------
 Datablock::Datablock(const Relation& relation) : RelationCompressor(relation) {}
+
 u32 Datablock::writeMetadata(const std::string& path,
                              std::vector<ColumnType> types,
                              vector<u32> part_counters,
