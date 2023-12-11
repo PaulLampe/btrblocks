@@ -15,6 +15,7 @@ struct OutputBlockStats {
   // Aux
   SIZE total_data_size;
   SIZE total_nullmap_size;
+  // Size of the whole datablock (inkl. meta info)
   SIZE total_db_size;
   double compression_ratio;  // before /old data size
 };

@@ -7,10 +7,10 @@
         {
             "type": "lldb",
             "request": "launch",
-            "name": "Tester",
+            "name": "tester",
             "program": "${workspaceFolder}/build/tester",
             "args": [], // ["--gtest_filter=Arrow"],
-            "cwd": "${workspaceFolder}"
+            "cwd": "${workspaceFolder}/build"
         }
     ]
 }

@@ -217,8 +217,9 @@ OutputBlockStats Datablock::compress(const Chunk& input_chunk, BytesArray& outpu
       .total_data_size = 0,
       .total_nullmap_size = 0,
       .total_db_size = db_meta_buffer_size,
-      .compression_ratio = 0};  // we are going to determine the
-                                // size during columns analysis
+      .compression_ratio = 0
+      };  // we are going to determine the
+          // size during columns analysis
   u32 db_write_offset = db_meta_buffer_size;
   // -------------------------------------------------------------------------------------
   u32 after_column_size = 0;
@@ -241,7 +242,7 @@ OutputBlockStats Datablock::compress(const Chunk& input_chunk, BytesArray& outpu
                                       output_block.get() + db_write_offset, input_chunk.tuple_count,
                                       cfg.integers.max_cascade_depth, after_column_size,
                                       column_meta.compression_type);
-        after_column_size += sizeof(column_meta.bias);
+        after_column_size += sizeof(column_meta.bias); // ?
         // -------------------------------------------------------------------------------------
         break;
       }

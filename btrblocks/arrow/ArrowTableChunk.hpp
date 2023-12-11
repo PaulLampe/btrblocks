@@ -1,22 +1,22 @@
 #pragma once
 #include <arrow/api.h>
+#include "common/Units.hpp"
 
 namespace btrblocks {
 
 struct ArrowTableChunk {
  public:
-  explicit ArrowTableChunk(const std::shared_ptr<arrow::Schema>& schema, arrow::ArrayVector columns)
-      : schema(schema), columns(columns) {}
+  explicit ArrowTableChunk(const std::shared_ptr<arrow::Schema> schema, arrow::ArrayVector columns)
+      : schema(schema), columns(std::move(columns)) {}
 
   std::pair<std::shared_ptr<arrow::Field>, std::shared_ptr<arrow::Array>> getSchemeAndColumn(
       size_t i);
 
-  size_t tupleCount() {
-    return std::accumulate(columns.begin(), columns.end(), 0,
-                           [](const auto& agg, const auto& col) { return agg + col->length(); });
+  SIZE tupleCount() {
+    return columns[0]->length();
   };
 
-  size_t columnCount() {
+  SIZE columnCount() {
     return columns.size();
   }
  private:

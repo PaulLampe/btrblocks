@@ -1,94 +1,126 @@
+#include "arrow/ArrowTableCompressor.hpp"
+#include "arrow/api.h"
 #include "btrblocks.hpp"
 #include "gtest/gtest.h"
 #include "scheme/SchemePool.hpp"
-#include "arrow/api.h"
-#include "arrow/ArrowTableCompressor.hpp"
+#include "TestArrowDataLoader.hpp"
+#include "test-cases/TestHelper.hpp"
 // -------------------------------------------------------------------------------------
 using namespace btrblocks;
 // -------------------------------------------------------------------------------------
 
-TEST(Arrow, SingleIntegerColumn) {
-  BtrBlocksConfig::get().integers.schemes = {IntegerSchemeType::UNCOMPRESSED, IntegerSchemeType::ONE_VALUE};
-  SchemePool::refresh();
-  int64_t numRows = 1000000;
-  arrow::Int32Builder builder;
-  for (int i = 0; i < numRows; ++i) {
-    arrow::Status s = builder.Append(i / 1000);
-  }
+void printAverageCompressionRatio(
+    std::shared_ptr<vector<tuple<OutputBlockStats, vector<u8>>>>& output) {
+  double compressionRatioSum =
+      std::accumulate(output->begin(), output->end(), 0.00,
+                      [](auto& agg, auto& p) { return agg + std::get<0>(p).compression_ratio; });
 
-  arrow::Status s = builder.AppendEmptyValue();
-
-  std::shared_ptr<arrow::Array> array = builder.Finish().ValueOrDie();
-
-  std::shared_ptr<arrow::Schema> schema =
-      arrow::schema({arrow::field("int_col", arrow::int32())});
-
-  std::shared_ptr<arrow::RecordBatch> batch = arrow::RecordBatch::Make(schema,numRows, {array});
-
-  ArrowTableCompressor::compress(batch);
+  std::cout << "average compression ratio: "
+            << static_cast<double>(compressionRatioSum) / static_cast<double>(output->size())
+            << "\n";
 }
 
-TEST(Arrow, SingleIntegerColumnONE_VALUE) {
-  BtrBlocksConfig::get().integers.schemes = {IntegerSchemeType::UNCOMPRESSED, IntegerSchemeType::ONE_VALUE, IntegerSchemeType::ONE_VALUE};
-  SchemePool::refresh();
-  int64_t numRows = 1000000;
-  arrow::Int32Builder builder;
-  for (int i = 0; i < numRows; ++i) {
-    arrow::Status s = builder.Append(1000);
+void checkCompressTable(std::shared_ptr<arrow::Table>& table) {
+  auto output = ArrowTableCompressor::compress(table);
+  auto decompressedOutput = ArrowTableCompressor::decompress(output);
+
+  printAverageCompressionRatio(output);
+
+  // TODO: Save column name in meta
+  for (int i = 0; i < table->schema()->num_fields(); ++i) {
+    auto originalColumn = table->column(0);
+    auto decompressedColumn = decompressedOutput->column(0);
+
+    assert(originalColumn->Equals(decompressedColumn));
   }
-
-  arrow::Status s = builder.AppendEmptyValue();
-
-  std::shared_ptr<arrow::Array> array = builder.Finish().ValueOrDie();
-
-  std::shared_ptr<arrow::Schema> schema =
-      arrow::schema({arrow::field("int_col", arrow::int32())});
-
-  std::shared_ptr<arrow::RecordBatch> batch = arrow::RecordBatch::Make(schema,numRows, {array});
-
-  ArrowTableCompressor::compress(batch);
 }
 
-
-
-TEST(Arrow, SingleIntegerColumnBP) {
-  BtrBlocksConfig::get().integers.schemes = {IntegerSchemeType::UNCOMPRESSED, IntegerSchemeType::ONE_VALUE, IntegerSchemeType::BP};
+TEST(Arrow, Begin) {
+  BtrBlocksConfig::get().integers.schemes = defaultIntegerSchemes();
+  BtrBlocksConfig::get().doubles.schemes = defaultDoubleSchemes();
+  BtrBlocksConfig::get().strings.schemes = defaultStringSchemes();
   SchemePool::refresh();
-  int64_t numRows = 1000000;
-  arrow::Int32Builder builder;
-  for (int i = 0; i < numRows; ++i) {
-    arrow::Status s = builder.Append(i % 100);
-  }
-
-  arrow::Status s = builder.AppendEmptyValue();
-
-  std::shared_ptr<arrow::Array> array = builder.Finish().ValueOrDie();
-
-  std::shared_ptr<arrow::Schema> schema =
-      arrow::schema({arrow::field("int_col", arrow::int32())});
-
-  std::shared_ptr<arrow::RecordBatch> batch = arrow::RecordBatch::Make(schema,numRows, {array});
-
-  ArrowTableCompressor::compress(batch);
 }
 
-TEST(Arrow, SingleIntegerColumnFOR) {
-  BtrBlocksConfig::get().integers.schemes = {IntegerSchemeType::UNCOMPRESSED, IntegerSchemeType::ONE_VALUE, IntegerSchemeType::FOR};
-  SchemePool::refresh();
-  int64_t numRows = 1000000;
-  arrow::Int32Builder builder;
-  for (int i = 0; i < numRows; ++i) {
-    arrow::Status s = builder.Append((i % 100) + 2e7);
-  }
+TEST(Arrow, SingleIntegerColumnOneValue) {
+  auto table = loadTableFromFiles({std::string(TEST_DATASET("integer/ONE_VALUE.integer"))});
 
-  arrow::Status s = builder.AppendEmptyValue();
+  checkCompressTable(table);
+}
 
-  std::shared_ptr<arrow::Array> array = builder.Finish().ValueOrDie();
+TEST(Arrow, SingleIntegerColumnDictionary8) {
+  auto table = loadTableFromFiles({std::string(TEST_DATASET("integer/DICTIONARY_8.integer"))});
+  
+  checkCompressTable(table);
+}
 
-  std::shared_ptr<arrow::Schema> schema =
-      arrow::schema({arrow::field("int_col", arrow::int32())});
+TEST(Arrow, SingleIntegerColumnDictionary16) {
+  auto table = loadTableFromFiles({std::string(TEST_DATASET("integer/DICTIONARY_16.integer"))});
 
-  std::shared_ptr<arrow::RecordBatch> batch = arrow::RecordBatch::Make(schema,numRows, {array});
+  checkCompressTable(table);
+}
 
-  ArrowTableCompressor::compress(batch);
+TEST(Arrow, IntegerColumnsDictionaries) {
+  auto table = loadTableFromFiles({std::string(TEST_DATASET("integer/DICTIONARY_8.integer")),
+                                   std::string(TEST_DATASET("integer/DICTIONARY_16.integer"))});
+
+  checkCompressTable(table);
+}
+
+TEST(Arrow, IntegerColumns) {
+
+  auto table = loadTableFromFiles({std::string(TEST_DATASET("integer/ONE_VALUE.integer")),
+                                   std::string(TEST_DATASET("integer/DICTIONARY_8.integer")),
+                                   std::string(TEST_DATASET("integer/DICTIONARY_16.integer")),});
+
+  checkCompressTable(table);
+}
+/*
+TEST(Arrow, IntegerRLE)
+{
+  EnforceScheme<IntegerSchemeType> enforcer(IntegerSchemeType::RLE);
+  auto table = loadTableFromFiles({std::string(TEST_DATASET("integer/RLE.integer"))});
+
+  checkCompressTable(table);
+}
+// -------------------------------------------------------------------------------------
+TEST(Arrow, DoubleRLE)
+{
+  EnforceScheme<DoubleSchemeType> enforcer(DoubleSchemeType::RLE);
+  auto table = loadTableFromFiles({std::string(TEST_DATASET("double/RANDOM.double"))});
+
+  checkCompressTable(table);
+}
+*/
+// -------------------------------------------------------------------------------------
+TEST(Arrow, IntegerDynamicDict)
+{
+  EnforceScheme<IntegerSchemeType> enforcer(IntegerSchemeType::DICT);
+  auto table = loadTableFromFiles({std::string(TEST_DATASET("integer/DICTIONARY_16.integer"))});
+
+  checkCompressTable(table);
+}
+// -------------------------------------------------------------------------------------
+TEST(Arrow, DoubleDecimal)
+{
+  EnforceScheme<DoubleSchemeType> enforcer(DoubleSchemeType::PSEUDODECIMAL);
+  auto table = loadTableFromFiles({std::string(TEST_DATASET("double/DICTIONARY_8.double"))});
+
+  checkCompressTable(table);
+}
+// -------------------------------------------------------------------------------------
+TEST(Arrow, DoubleDynamicDict)
+{
+  EnforceScheme<DoubleSchemeType> enforcer(DoubleSchemeType::DICT);
+  auto table = loadTableFromFiles({std::string(TEST_DATASET("double/DICTIONARY_8.double"))});
+
+  checkCompressTable(table);
+}
+
+TEST(Arrow, DoubleFrequency)
+{
+  EnforceScheme<DoubleSchemeType> enforcer(DoubleSchemeType::FREQUENCY);
+  auto table = loadTableFromFiles({std::string(TEST_DATASET("double/FREQUENCY.double"))});
+
+  checkCompressTable(table);
 }
