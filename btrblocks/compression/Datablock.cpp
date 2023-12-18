@@ -103,7 +103,7 @@ SIZE Datablock::compress(const InputChunk& input_chunk, u8* output) {
       meta->compression_type = static_cast<u8>(preferred_scheme.schemeType());
       // -------------------------------------------------------------------------------------
       // Compression
-      ThreadCache::get().compression_level++;
+      //ThreadCache::get().compression_level++;
       const StringArrayViewer str_viewer(input_chunk.data.get());
       u32 after_column_size =
           preferred_scheme.compress(str_viewer, input_chunk.nullmap.get(), output_data, stats);
@@ -125,7 +125,7 @@ SIZE Datablock::compress(const InputChunk& input_chunk, u8* output) {
                                 (ThreadCache::hasUsedFsst() ? "_FSST" : ""),
                             estimated_cf, stats.total_size, after_column_size, stats.unique_count,
                             "?");
-      ThreadCache::get().compression_level--;
+      //ThreadCache::get().compression_level--;
       // -------------------------------------------------------------------------------------
       break;
     }
@@ -242,7 +242,7 @@ OutputBlockStats Datablock::compress(const Chunk& input_chunk, BytesArray& outpu
                                       output_block.get() + db_write_offset, input_chunk.tuple_count,
                                       cfg.integers.max_cascade_depth, after_column_size,
                                       column_meta.compression_type);
-        after_column_size += sizeof(column_meta.bias); // ?
+        // after_column_size += sizeof(column_meta.bias); // ?
         // -------------------------------------------------------------------------------------
         break;
       }

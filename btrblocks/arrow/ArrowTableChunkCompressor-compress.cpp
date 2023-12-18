@@ -1,22 +1,31 @@
 #include "ArrowTableChunkCompressor.hpp"
+#include <arrow/array/array_binary.h>
 #include <arrow/type.h>
 #include <arrow/type_fwd.h>
+#include <sys/mman.h>
+#include <cstdint>
+#include <cstring>
+#include <memory>
 #include <tuple>
+#include <vector>
 #include "btrblocks.hpp"
 #include "common/Units.hpp"
 #include "compression/Compressor.hpp"
 #include "compression/Datablock.hpp"
 #include "compression/SchemePicker.hpp"
 #include "scheme/SchemeType.hpp"
+#include "storage/StringArrayViewer.hpp"
 
 namespace btrblocks {
 
 std::tuple<OutputBlockStats, std::vector<u8>> ArrowTableChunkCompressor::compress(ArrowTableChunk& chunk) {
+  auto& config = BtrBlocksConfig::get();
+
   SIZE columnCount = chunk.columnCount();
-  SIZE chunkSizeBytes = 0;
+  SIZE chunkSizeBytes = chunk.approxDataSizeBytes();
   const u32 datablockMetaBufferSize = sizeof(DatablockMeta) + (columnCount * sizeof(ColumnMeta));
 
-  std::vector<u8> output(datablockMetaBufferSize + 8 * chunk.tupleCount());
+  std::vector<u8> output(datablockMetaBufferSize + chunkSizeBytes * 2);
   SIZE outputWriteOffset = datablockMetaBufferSize;
 
   // Initilize datablock meta
@@ -44,8 +53,6 @@ std::tuple<OutputBlockStats, std::vector<u8>> ArrowTableChunkCompressor::compres
       btrblocks::IntegerSchemePicker::compress(
           array->raw_values(), array->null_bitmap_data(), output.data() + outputWriteOffset,
           array->length(), 3, compressedColumnSize, columnMeta.compression_type);
-
-      chunkSizeBytes += column->length() * sizeof(INTEGER);
     }
 
     // DOUBLE
@@ -56,8 +63,56 @@ std::tuple<OutputBlockStats, std::vector<u8>> ArrowTableChunkCompressor::compres
       btrblocks::DoubleSchemePicker::compress(
           array->raw_values(), array->null_bitmap_data(), output.data() + outputWriteOffset,
           array->length(), 3, compressedColumnSize, columnMeta.compression_type);
+    }
 
-      chunkSizeBytes += column->length() * sizeof(DOUBLE);
+    // STRINGS
+    if (field->type()->Equals(arrow::utf8())) {
+      columnMeta.column_type = ColumnType::STRING;
+
+      auto array = std::static_pointer_cast<arrow::StringArray>(column);
+
+      auto tupleCount = array->length();
+
+      auto slotsSize = static_cast<INTEGER>((tupleCount + 1) * sizeof(StringArrayViewer::Slot));
+
+      auto resultingSize = slotsSize + array->total_values_length();
+
+      auto* arrayCopy = malloc(resultingSize);
+
+      auto offsetPtr = reinterpret_cast<StringArrayViewer::Slot*>(arrayCopy);
+
+      for (int64_t i = 0; i < tupleCount; ++i) {
+        auto offset = static_cast<INTEGER>(array->value_offset(i));
+        (offsetPtr + i)->offset = offset + slotsSize;
+      }
+
+      auto lastPtr = (offsetPtr + tupleCount);
+
+      lastPtr->offset = array->value_offset(tupleCount - 1) + array->value_length(tupleCount - 1) + slotsSize;
+
+      auto dataPtr = reinterpret_cast<u8*>(offsetPtr + tupleCount + 1);
+
+      memcpy(dataPtr, array->raw_data(), array->total_values_length());
+      
+      StringStats stats = StringStats::generateStats(
+            StringArrayViewer(reinterpret_cast<u8*>(arrayCopy)), array->null_bitmap_data(),
+            tupleCount, resultingSize);
+
+      StringScheme& preferred_scheme =
+          StringSchemePicker::chooseScheme(stats, config.strings.max_cascade_depth);
+      
+      columnMeta.compression_type = static_cast<u8>(preferred_scheme.schemeType());
+
+      //ThreadCache::get().compression_level++;
+
+      const StringArrayViewer str_viewer(reinterpret_cast<u8*>(offsetPtr));
+
+      compressedColumnSize = preferred_scheme.compress(str_viewer, array->null_bitmap_data(),
+                                                    output.data() + outputWriteOffset, stats);
+
+      //ThreadCache::get().compression_level--;
+
+      free(arrayCopy);
     }
 
     // Update meta info

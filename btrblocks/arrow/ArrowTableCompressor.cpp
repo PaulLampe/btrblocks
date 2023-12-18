@@ -50,9 +50,7 @@ std::shared_ptr<arrow::Table> ArrowTableCompressor::decompress(std::shared_ptr<v
 
       assert(fields[i]->Equals(type));
 
-      if (type->type()->Equals(arrow::int32())) {
-        chunkedColumns[i].push_back(data);
-      }
+      chunkedColumns[i].push_back(data);
     }
   }
 

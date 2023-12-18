@@ -10,7 +10,7 @@ void TestHelper::CheckRelationCompression(Relation &relation, RelationCompressor
    for ( u32 chunk_i = 0; chunk_i < ranges.size(); chunk_i++ ) {
       auto chunk = relation.getChunk(ranges, chunk_i);
       auto db_meta = compressor.compress(chunk, compressed_chunks[chunk_i]);
-      if ( expected_compression_schemes.size()) {
+      if ( expected_compression_schemes.size() ) {
          //auto scheme_cnt = 0;
          //for (auto e : expected_compression_schemes) {
          //   for (auto x : db_meta.used_compression_schemes) {

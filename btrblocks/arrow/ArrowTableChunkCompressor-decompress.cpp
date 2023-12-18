@@ -1,5 +1,7 @@
 #include "ArrowTableChunkCompressor.hpp"
 #include <arrow/array/array_base.h>
+#include <arrow/array/array_binary.h>
+#include <arrow/array/builder_binary.h>
 #include <arrow/type.h>
 #include <arrow/type_fwd.h>
 #include <memory>
@@ -13,6 +15,7 @@
 #include "compression/Datablock.hpp"
 #include "compression/SchemePicker.hpp"
 #include "scheme/SchemeType.hpp"
+#include "storage/StringArrayViewer.hpp"
 
 namespace btrblocks {
 
@@ -42,20 +45,22 @@ ArrowTableChunk ArrowTableChunkCompressor::decompress(std::tuple<OutputBlockStat
 
         auto& compressionScheme = IntegerSchemePicker::MyTypeWrapper::getScheme(columnMeta.compression_type);
 
-        std::vector<INTEGER> destination(tupleCount);
+        auto destination = makeBytesArray(tupleCount * sizeof(INTEGER) + SIMD_EXTRA_BYTES);
 
         compressionScheme.decompress(
-          destination.data(), 
-          nullptr, 
+          reinterpret_cast<INTEGER *>(destination.get()), 
+          nullptr,
           data.data() + columnMeta.offset,
           tupleCount, 
           0);
 
 
         arrow::Int32Builder int32builder;
-        auto status = int32builder.Resize(tupleCount);
+        int32builder.Resize(tupleCount).ok();
 
-        status = int32builder.AppendValues(destination);
+        auto values = std::vector<INTEGER>(reinterpret_cast<INTEGER *>(destination.get()), reinterpret_cast<INTEGER *>(destination.get()) + tupleCount);
+
+        int32builder.AppendValues(values).ok();
 
         columns[columnIndex] = int32builder.Finish().ValueOrDie();
 
@@ -67,22 +72,58 @@ ArrowTableChunk ArrowTableChunkCompressor::decompress(std::tuple<OutputBlockStat
 
         auto& compressionScheme = DoubleSchemePicker::MyTypeWrapper::getScheme(columnMeta.compression_type);
 
-        std::vector<DOUBLE> destination(tupleCount);
+        auto destination = makeBytesArray(tupleCount * sizeof(DOUBLE) + SIMD_EXTRA_BYTES);
 
         compressionScheme.decompress(
-          destination.data(), 
+          reinterpret_cast<DOUBLE*>(destination.get()), 
           nullptr,
           data.data() + columnMeta.offset,
           tupleCount,
           0);
 
 
-        arrow::DoubleBuilder dobuleBuilder;
-        auto status = dobuleBuilder.Resize(tupleCount);
+        arrow::DoubleBuilder doubleBuilder;
+        doubleBuilder.Resize(tupleCount).ok();
 
-        status = dobuleBuilder.AppendValues(destination);
+        auto values = std::vector<DOUBLE>(reinterpret_cast<DOUBLE *>(destination.get()), reinterpret_cast<DOUBLE *>(destination.get()) + tupleCount);
 
-        columns[columnIndex] = dobuleBuilder.Finish().ValueOrDie();
+        doubleBuilder.AppendValues(values).ok();
+
+        columns[columnIndex] = doubleBuilder.Finish().ValueOrDie();
+
+        break;
+      }
+
+      case ColumnType::STRING: {
+
+        fields[columnIndex] = arrow::field("string_col", arrow::utf8());
+        
+        const auto used_compression_scheme =
+            static_cast<StringSchemeType>(columnMeta.compression_type);
+
+        auto& scheme = SchemePool::available_schemes->string_schemes[used_compression_scheme];
+
+        auto size = scheme->getDecompressedSizeNoCopy(data.data() + columnMeta.offset,
+                                                            tupleCount, nullptr);
+
+        SIZE destinationSize = size + 8 + SIMD_EXTRA_BYTES + 4096;
+
+        auto destination = makeBytesArray(destinationSize);
+
+        scheme->decompressNoCopy(destination.get(), nullptr, data.data() + columnMeta.offset, tupleCount, 0);
+        
+        auto pointerViewer = StringPointerArrayViewer(destination.get());
+
+        arrow::StringBuilder stringBuilder;
+        stringBuilder.Resize(tupleCount).ok();
+
+        for (SIZE i = 0; i < tupleCount; ++i) {
+          stringBuilder.Append(pointerViewer(i)).ok();
+        }
+
+        auto a = stringBuilder.Finish().ValueOrDie();
+
+        columns[columnIndex] = a;
 
         break;
       }
