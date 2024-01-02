@@ -141,6 +141,7 @@ struct Vector<std::string_view> {
 
     _iterator(SlotPtr slot, Ptr data) : slot(slot), data(data) {}
     _iterator& operator++() {
+      data += slot->size;
       slot++;
       return *this;
     }
@@ -149,17 +150,23 @@ struct Vector<std::string_view> {
       ++(*this);
       return tmp;
     }
-    bool operator!=(const _iterator& o) const { return slot != o.slot; }
-    std::string_view operator*() const { return {data, slot->size}; }
+    bool operator!=(const _iterator& o) const { 
+      return slot != o.slot; 
+    }
+    std::string_view operator*() const { 
+      return {data, slot->size};
+    }
   };
   using iterator = _iterator<StringIndexSlot*, char*>;
   using const_iterator = _iterator<const StringIndexSlot*, const char*>;
   // ------------------------------------------------------------------------------
-  iterator begin() { return {data->slot, reinterpret_cast<char*>(data)}; }
-  iterator end() { return {data->slot + data->count, reinterpret_cast<char*>(data)}; }
-  [[nodiscard]] const_iterator begin() const { return {data->slot, reinterpret_cast<char*>(data)}; }
+  iterator begin() { return {data->slot, reinterpret_cast<char*>(data->slot + data->count)}; }
+  iterator end() { return {data->slot + data->count, reinterpret_cast<char*>(data->slot + data->count)}; }
+  [[nodiscard]] const_iterator begin() const { 
+    return {data->slot, reinterpret_cast<char*>(data->slot + data->count)}; 
+  }
   [[nodiscard]] const_iterator end() const {
-    return {data->slot + data->count, reinterpret_cast<char*>(data)};
+    return {data->slot + data->count, reinterpret_cast<char*>(data->slot + data->count)};
   }
   // ------------------------------------------------------------------------------
 };
