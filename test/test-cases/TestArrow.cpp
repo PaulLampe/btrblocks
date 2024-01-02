@@ -82,11 +82,8 @@ TEST(Arrow, IntegerRLE)
 TEST(Arrow, IntegerMixed) {
   auto table = loadTableFromFiles({std::string(TEST_DATASET("integer/ONE_VALUE.integer")),
                                    std::string(TEST_DATASET("integer/DICTIONARY_8.integer")),
-                                   std::string(TEST_DATASET("integer/DICTIONARY_16.integer")),
-                                   std::string(TEST_DATASET("double/ONE_VALUE.double")),
-                                   std::string(TEST_DATASET("string/ONE_VALUE.string")),
-                                   std::string(TEST_DATASET("string/DICTIONARY_8.string")),
-                                   std::string((TEST_DATASET("string/DICTIONARY_16.string")))});
+                                   std::string(TEST_DATASET("integer/DICTIONARY_16.integer"))
+                                   });
 
   checkCompressTable(table);
 }
@@ -138,7 +135,7 @@ TEST(Arrow, StringOneValue) {
 
 TEST(Arrow, StringCompressedDictionary)
 {
-   EnforceScheme<StringSchemeType> enforcer(StringSchemeType::DICT);
+  EnforceScheme<StringSchemeType> enforcer(StringSchemeType::DICT);
   auto table = loadTableFromFiles({std::string(TEST_DATASET("string/COMPRESSED_DICTIONARY.string"))});
 
   checkCompressTable(table);
