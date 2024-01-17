@@ -81,14 +81,16 @@ std::tuple<OutputBlockStats, std::vector<u8>> ArrowTableChunkCompressor::compres
 
       auto offsetPtr = reinterpret_cast<StringArrayViewer::Slot*>(arrayCopy);
 
+      auto valueOffset = 0;
+
       for (int64_t i = 0; i < tupleCount; ++i) {
-        auto offset = static_cast<INTEGER>(array->value_offset(i));
-        (offsetPtr + i)->offset = offset + slotsSize;
+        (offsetPtr + i)->offset = valueOffset + slotsSize;
+        valueOffset += array->value_length(i);
       }
 
       auto lastPtr = (offsetPtr + tupleCount);
 
-      lastPtr->offset = array->value_offset(tupleCount - 1) + array->value_length(tupleCount - 1) + slotsSize;
+      lastPtr->offset = valueOffset + slotsSize;
 
       auto dataPtr = reinterpret_cast<u8*>(offsetPtr + tupleCount + 1);
 
