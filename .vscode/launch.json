@@ -9,7 +9,7 @@
             "request": "launch",
             "name": "tester",
             "program": "${workspaceFolder}/build/tester",
-            "args": [], // ["--gtest_filter=Arrow"],
+            "args": ["--gtest_filter=ParquetArrow.*"],
             "cwd": "${workspaceFolder}/build"
         }
     ]

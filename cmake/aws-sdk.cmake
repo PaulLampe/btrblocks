@@ -5,6 +5,8 @@
 include(ExternalProject)
 find_package(Git REQUIRED)
 
+set(AWS_CMAKE_FLAGS "${AWS_CXX_FLAGS} -Wno-deprecated-declarations")
+
 # libawscpp
 ExternalProject_Add(
         libawscpp-download
@@ -18,7 +20,7 @@ ExternalProject_Add(
         -DCMAKE_INSTALL_LIBDIR=lib
         -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}
         -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
-        -DCMAKE_CXX_FLAGS=${CMAKE_CXX_FLAGS} -Wno-error=deprecated-declarations
+        -DCMAKE_CXX_FLAGS=${AWS_CMAKE_FLAGS}
         -DCMAKE_BUILD_TYPE:STRING=${CMAKE_BUILD_TYPE}
         -DENABLE_TESTING=OFF # Test are broken with gcc-11, gcc-10 leads to errors about missing atomic operations. Gave up and disabled tests.
         -DBUILD_ONLY=s3|s3-crt|transfer

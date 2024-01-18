@@ -23,6 +23,7 @@ enable_testing()
 add_executable(bench_dataset_downloader ${BTR_BENCH_DIR}/AwsDatasetDownloader.cpp)
 target_link_libraries(bench_dataset_downloader btrblocks gflags Threads::Threads libaws-cpp-sdk-core libaws-cpp-sdk-s3 libaws-cpp-sdk-transfer)
 target_include_directories(bench_dataset_downloader PRIVATE ${BTR_INCLUDE_DIR})
+target_compile_options(bench_dataset_downloader PUBLIC -Wno-deprecated-declarations)
 
 # ---------------------------------------------------------------------------
 # Linting
