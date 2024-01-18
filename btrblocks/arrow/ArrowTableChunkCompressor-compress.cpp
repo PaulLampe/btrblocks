@@ -94,7 +94,12 @@ std::tuple<OutputBlockStats, std::vector<u8>> ArrowTableChunkCompressor::compres
 
       auto dataPtr = reinterpret_cast<u8*>(offsetPtr + tupleCount + 1);
 
-      memcpy(dataPtr, array->raw_data(), array->total_values_length());
+      // Data pointers do not care about being a slice and just return the original array's pointers
+      // As the value_offset does the same like this we get the pointer of the data in this slice/ if we 
+      // have a copied array just get the raw data pointer as value_offset returns 0
+      auto arrowDataPtr = array->raw_data() + array->value_offset(0);
+
+      memcpy(dataPtr, arrowDataPtr, array->total_values_length());
       
       StringStats stats = StringStats::generateStats(
             StringArrayViewer(reinterpret_cast<u8*>(arrayCopy)), array->null_bitmap_data(),
