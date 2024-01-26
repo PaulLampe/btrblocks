@@ -14,7 +14,7 @@ double Fsst::expectedCompressionRatio(StringStats& stats, u8) {
   return 1.0;
 }
 
-u32 Fsst::compress(const btrblocks::StringArrayViewer src,
+u32 Fsst::compress(const btrblocks::StringArrayViewer& src,
                    const BITMAP*,
                    u8* dest,
                    btrblocks::StringStats& stats) {

@@ -21,7 +21,7 @@ class DynamicDictionary : public StringScheme {
  public:
   double expectedCompressionRatio(StringStats& stats, u8 allowed_cascading_level) override;
   bool usesFsst(const u8* src) override;
-  u32 compress(StringArrayViewer src, const BITMAP* nullmap, u8* dest, StringStats& stats) override;
+  u32 compress(const StringArrayViewer& src, const BITMAP* nullmap, u8* dest, StringStats& stats) override;
   std::string fullDescription(const u8* src) override;
   bool isUsable(StringStats& stats) override;
   u32 getDecompressedSize(const u8* src, u32 tuple_count, BitmapWrapper* nullmap) override;

@@ -39,7 +39,7 @@ bool DynamicDictionary::usesFsst(const u8* src) {
   return col_struct.use_fsst;
 }
 // -------------------------------------------------------------------------------------
-u32 DynamicDictionary::compress(const btrblocks::StringArrayViewer src,
+u32 DynamicDictionary::compress(const btrblocks::StringArrayViewer& src,
                                 const BITMAP*,
                                 u8* dest,
                                 btrblocks::StringStats& stats) {

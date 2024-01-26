@@ -8,6 +8,7 @@
 #include "common/Units.hpp"
 #include "compression/Datablock.hpp"
 #include "compression/SchemePicker.hpp"
+#include "../ArrowStringArrayViewer.cpp"
 
 namespace btrblocks {
 
@@ -28,48 +29,21 @@ SIZE ArrowColumnChunkCompressor<ColumnType::STRING>::compress(const shared_ptr<a
 
   auto tupleCount = array->length();
 
-  auto slotsSize = static_cast<INTEGER>((tupleCount + 1) * sizeof(StringArrayViewer::Slot));
+  auto arrowStringArrayViewer = ArrowStringArrayViewer(array);
 
-  auto resultingSize = slotsSize + array->total_values_length();
+  auto dataSize = array->value_offsets()->size() + array->total_values_length();
 
-  auto* arrayCopy = malloc(resultingSize);
-
-  auto offsetPtr = reinterpret_cast<StringArrayViewer::Slot*>(arrayCopy);
-
-  auto valueOffset = 0;
-
-  for (int64_t i = 0; i < tupleCount; ++i) {
-    (offsetPtr + i)->offset = valueOffset + slotsSize;
-    valueOffset += array->value_length(i);
-  }
-
-  auto lastPtr = (offsetPtr + tupleCount);
-
-  lastPtr->offset = valueOffset + slotsSize;
-
-  auto dataPtr = reinterpret_cast<u8*>(offsetPtr + tupleCount + 1);
-
-  // Data pointers do not care about being a slice and just return the original array's pointers
-  // As the value_offset does the same like this we get the pointer of the data in this slice/ if we
-  // have a copied array just get the raw data pointer as value_offset returns 0
-  auto arrowDataPtr = array->raw_data() + array->value_offset(0);
-
-  memcpy(dataPtr, arrowDataPtr, array->total_values_length());
 
   StringStats stats =
-      StringStats::generateStats(StringArrayViewer(reinterpret_cast<u8*>(arrayCopy)),
-                                 array->null_bitmap_data(), tupleCount, resultingSize);
+      StringStats::generateStats(arrowStringArrayViewer,
+                                 array->null_bitmap_data(), tupleCount, dataSize );
 
   StringScheme& preferred_scheme =
       StringSchemePicker::chooseScheme(stats, config.strings.max_cascade_depth);
 
   meta->compression_type = static_cast<u8>(preferred_scheme.schemeType());
 
-  const StringArrayViewer str_viewer(reinterpret_cast<u8*>(offsetPtr));
-
-  auto compressedColumnSize = preferred_scheme.compress(str_viewer, array->null_bitmap_data(), meta->data, stats);
-
-  free(arrayCopy);
+  auto compressedColumnSize = preferred_scheme.compress(arrowStringArrayViewer, array->null_bitmap_data(), meta->data, stats);
 
   return sizeof(ColumnChunkMeta) + compressedColumnSize;
 }

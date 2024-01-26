@@ -14,7 +14,7 @@ double Dictionary8::expectedCompressionRatio(StringStats& stats, u8 allowed_casc
   return VDictExpectedCompressionRatio<u8>(stats);
 }
 // -------------------------------------------------------------------------------------
-u32 Dictionary8::compress(const StringArrayViewer src,
+u32 Dictionary8::compress(const StringArrayViewer& src,
                           const BITMAP* nullmap,
                           u8* dest,
                           StringStats& stats) {
@@ -44,7 +44,7 @@ double Dictionary16::expectedCompressionRatio(StringStats& stats, u8 allowed_cas
   return VDictExpectedCompressionRatio<u16>(stats);
 }
 // -------------------------------------------------------------------------------------
-u32 Dictionary16::compress(const StringArrayViewer src,
+u32 Dictionary16::compress(const StringArrayViewer& src,
                            const BITMAP* nullmap,
                            u8* dest,
                            StringStats& stats) {

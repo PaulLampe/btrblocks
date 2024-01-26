@@ -8,7 +8,7 @@ namespace btrblocks::legacy::strings {
 class Dictionary8 : public StringScheme {
  public:
   double expectedCompressionRatio(StringStats& stats, u8 allowed_cascading_level) override;
-  u32 compress(const StringArrayViewer src,
+  u32 compress(const StringArrayViewer& src,
                const BITMAP* nullmap,
                u8* dest,
                StringStats& stats) override;
@@ -26,7 +26,7 @@ class Dictionary8 : public StringScheme {
 class Dictionary16 : public StringScheme {
  public:
   double expectedCompressionRatio(StringStats& stats, u8 allowed_cascading_level) override;
-  u32 compress(const StringArrayViewer src,
+  u32 compress(const StringArrayViewer& src,
                const BITMAP* bitmap,
                u8* dest,
                StringStats& stats) override;

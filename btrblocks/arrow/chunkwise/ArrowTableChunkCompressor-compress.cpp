@@ -112,7 +112,7 @@ std::tuple<OutputBlockStats, std::vector<u8>> ArrowTableChunkCompressor::compres
 
       //ThreadCache::get().compression_level++;
 
-      const StringArrayViewer str_viewer(reinterpret_cast<u8*>(offsetPtr));
+      StringArrayViewer str_viewer(reinterpret_cast<u8*>(offsetPtr));
 
       compressedColumnSize = preferred_scheme.compress(str_viewer, array->null_bitmap_data(),
                                                     output.data() + outputWriteOffset, stats);

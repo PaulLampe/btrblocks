@@ -16,7 +16,7 @@ double Uncompressed::expectedCompressionRatio(StringStats& stats, u8 allowed_cas
   // just 1 !
 }
 // -------------------------------------------------------------------------------------
-u32 Uncompressed::compress(const StringArrayViewer src,
+u32 Uncompressed::compress(const StringArrayViewer& src,
                            const BITMAP*,
                            u8* dest,
                            StringStats& stats) {

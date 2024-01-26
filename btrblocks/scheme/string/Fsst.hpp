@@ -20,7 +20,7 @@ struct FsstStructure {
 class Fsst : public StringScheme {
  public:
   double expectedCompressionRatio(StringStats& stats, u8 allowed_cascading_level) override;
-  u32 compress(StringArrayViewer src, const BITMAP* nullmap, u8* dest, StringStats& stats) override;
+  u32 compress(const StringArrayViewer& src, const BITMAP* nullmap, u8* dest, StringStats& stats) override;
   u32 getDecompressedSize(const u8* src, u32 tuple_count, BitmapWrapper* nullmap) override;
   u32 getTotalLength(const u8* src, u32 tuple_count, BitmapWrapper* nullmap) override;
   void decompress(u8* dest,

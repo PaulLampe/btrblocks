@@ -26,7 +26,7 @@ inline double VDictExpectedCompressionRatio(StringStats& stats) {
 }
 // -------------------------------------------------------------------------------------
 template <typename CodeType>
-inline u32 VDictCompressColumn(const StringArrayViewer src,
+inline u32 VDictCompressColumn(const StringArrayViewer& src,
                                const BITMAP*,
                                u8* dest,
                                StringStats& stats) {

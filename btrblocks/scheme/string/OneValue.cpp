@@ -19,7 +19,7 @@ double OneValue::expectedCompressionRatio(StringStats& stats, u8 allowed_cascadi
   }
 }
 // -------------------------------------------------------------------------------------
-u32 OneValue::compress(const StringArrayViewer,
+u32 OneValue::compress(const StringArrayViewer&,
                        const BITMAP* bitmap,
                        u8* dest,
                        StringStats& stats) {

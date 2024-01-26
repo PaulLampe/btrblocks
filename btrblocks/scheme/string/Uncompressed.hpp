@@ -12,7 +12,7 @@ struct UncompressedStructure {
 class Uncompressed : public StringScheme {
  public:
   double expectedCompressionRatio(StringStats& stats, u8 allowed_cascading_level) override;
-  u32 compress(const StringArrayViewer src,
+  u32 compress(const StringArrayViewer& src,
                const BITMAP* bitmap,
                u8* dest,
                StringStats& stats) override;

@@ -2,7 +2,7 @@
 // -------------------------------------------------------------------------------------
 namespace btrblocks {
 // -------------------------------------------------------------------------------------
-StringStats StringStats::generateStats(const btrblocks::StringArrayViewer src,
+StringStats StringStats::generateStats(const btrblocks::StringArrayViewer& src,
                                        const BITMAP* nullmap,
                                        u32 tuple_count,
                                        SIZE column_data_size) {

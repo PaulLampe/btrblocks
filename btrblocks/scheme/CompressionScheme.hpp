@@ -97,7 +97,7 @@ class StringScheme {
     return false;
   }
   // -------------------------------------------------------------------------------------
-  virtual u32 compress(StringArrayViewer src,
+  virtual u32 compress(const StringArrayViewer& src,
                        const BITMAP* nullmap,
                        u8* dest,
                        StringStats& stats) = 0;
