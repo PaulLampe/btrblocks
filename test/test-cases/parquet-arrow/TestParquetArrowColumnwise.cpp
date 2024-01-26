@@ -1,5 +1,4 @@
 #include "TestParquetArrowDataLoader.hpp"
-#include "arrow/ArrowTableCompressor.hpp"
 #include "arrow/api.h"
 #include "btrblocks.hpp"
 #include "common/Units.hpp"
@@ -9,7 +8,7 @@
 #include "test-cases/TestHelper.hpp"
 #include "../arrow/CheckAndCompress.hpp"
 
-TEST(ParquetArrow, Begin) {
+TEST(ParquetArrowColumnwise, Begin) {
   BtrBlocksConfig::get().integers.schemes = defaultIntegerSchemes();
   /*  
   {IntegerSchemeType::UNCOMPRESSED, IntegerSchemeType::ONE_VALUE, IntegerSchemeType::DICT,
@@ -29,24 +28,24 @@ TEST(ParquetArrow, Begin) {
   SchemePool::refresh();
 }
 
-TEST(ParquetArrow, TestNonNullIntegerColumns) {
+TEST(ParquetArrowColumnwise, TestNonNullIntegerColumns) {
   // auto table = loadTableFromParquet({std::string(TEST_DATASET("parquet/YaleLanguages_1_none.parquet"))}, {"bibid", "mfhdid"});
 
   // checkCompressTable(table);
 
   auto table = loadTableFromParquet({std::string(TEST_DATASET("parquet/parquet_none_arrow_0.parquet"))}, {"npi", "totaldaysupply"});
 
-  checkCompressTable(table);
+  checkCompressTableColumnwise(table);
 }
 
-TEST(ParquetArrow, TestNonNullDoubleColumns) {
+TEST(ParquetArrowColumnwise, TestNonNullDoubleColumns) {
   auto table = loadTableFromParquet({std::string(TEST_DATASET("parquet/parquet_none_arrow_0.parquet"))}, {"calculation3170826185505725", "calculation7130826185400024", "totaldrugcost"});
 
-  checkCompressTable(table);
+  checkCompressTableColumnwise(table);
 }
 
-TEST(ParquetArrow, TestNonNullVarcharColumns) {
+TEST(ParquetArrowColumnwise, TestNonNullVarcharColumns) {
   auto table = loadTableFromParquet({std::string(TEST_DATASET("parquet/YaleLanguages_1_none.parquet"))}, {"bibformat"});
 
-  checkCompressTable(table);
+  checkCompressTableColumnwise(table);
 }

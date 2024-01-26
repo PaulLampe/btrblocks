@@ -10,6 +10,9 @@
 #include <type_traits>
 // ------------------------------------------------------------------------------
 #include "compression/Datablock.hpp"
+#include "arrow/columnwise/ArrowColumnwiseTableCompressor.hpp"
+#include "arrow/columnwise/ArrowColumnCompressor.hpp"
+#include "arrow/columnwise/ArrowColumn.hpp"
 #include "scheme/SchemeConfig.hpp"
 #include "scheme/SchemeType.hpp"
 // ------------------------------------------------------------------------------

@@ -137,6 +137,27 @@ class Utils {
       throw Generic_Exception(msg);
     }
   }
+
+  static void readFileToMemory(const std::string& path, std::vector<u8>& target) {
+    std::ifstream file(path, std::ios::binary | std::ios::ate);
+    if (!file.good()) {
+      auto msg = "Failed to open " + path;
+      perror(msg.c_str());
+      throw Generic_Exception(msg);
+    }
+    std::streamsize filesize = file.tellg();
+    file.seekg(0, std::ios::beg);
+
+    target.resize(filesize);
+    file.read(reinterpret_cast<char*>(target.data()), filesize);
+
+    file.close();
+    if (file.fail()) {
+      auto msg = "Reading " + path + " failed";
+      perror(msg.c_str());
+      throw Generic_Exception(msg);
+    }
+  }
 };
 // -------------------------------------------------------------------------------------
 }  // namespace btrblocks

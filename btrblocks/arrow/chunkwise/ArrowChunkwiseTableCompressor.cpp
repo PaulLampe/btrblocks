@@ -5,8 +5,8 @@
 #include <tuple>
 #include <vector>
 #include "arrow/api.h"
-#include "ArrowTableCompressor.hpp"
-#include "ArrowTableWrapper.hpp"
+#include "ArrowChunkwiseTableCompressor.hpp"
+#include "../ArrowTableWrapper.hpp"
 #include "ArrowTableChunkCompressor.hpp"
 #include "common/Units.hpp"
 #include "compression/Compressor.hpp"
@@ -14,7 +14,7 @@
 
 namespace btrblocks {
 
-std::shared_ptr< vector< tuple< OutputBlockStats, vector<u8> > > > ArrowTableCompressor::compress(std::shared_ptr<arrow::Table> batch) {
+std::shared_ptr< vector< tuple< OutputBlockStats, vector<u8> > > > ArrowChunkwiseTableCompressor::compress(std::shared_ptr<arrow::Table> batch) {
   ArrowTableWrapper wrapper(std::move(batch));
   vector<ArrowTableChunk> chunks = wrapper.generateChunks();
 
@@ -27,7 +27,7 @@ std::shared_ptr< vector< tuple< OutputBlockStats, vector<u8> > > > ArrowTableCom
   return output;
 }
 
-std::shared_ptr<arrow::Table> ArrowTableCompressor::decompress(std::shared_ptr<vector< tuple< OutputBlockStats, vector<u8> > >>& compressedBatch) {
+std::shared_ptr<arrow::Table> ArrowChunkwiseTableCompressor::decompress(std::shared_ptr< vector< vector<u8> > >& compressedBatch) {
   vector<ArrowTableChunk> chunks{};
 
   for (auto& compressedChunk : *compressedBatch) {

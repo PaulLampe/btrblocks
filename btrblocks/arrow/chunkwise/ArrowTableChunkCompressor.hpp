@@ -12,7 +12,7 @@ public:
 
   static std::tuple<OutputBlockStats, std::vector<u8>> compress(ArrowTableChunk& chunk);
 
-  static ArrowTableChunk decompress(std::tuple<OutputBlockStats, std::vector<u8>>& chunk);
+  static ArrowTableChunk decompress(std::vector<u8>& compressed_data);
 
 private:
 

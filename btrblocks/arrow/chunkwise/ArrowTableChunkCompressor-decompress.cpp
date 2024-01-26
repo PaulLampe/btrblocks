@@ -8,7 +8,7 @@
 #include <stdexcept>
 #include <tuple>
 #include <vector>
-#include "arrow/ArrowTableChunk.hpp"
+#include "arrow/chunkwise/ArrowTableChunk.hpp"
 #include "btrblocks.hpp"
 #include "common/Units.hpp"
 #include "compression/Compressor.hpp"
@@ -19,10 +19,9 @@
 
 namespace btrblocks {
 
-ArrowTableChunk ArrowTableChunkCompressor::decompress(std::tuple<OutputBlockStats, std::vector<u8>>& compressed_chunk) {
+ArrowTableChunk ArrowTableChunkCompressor::decompress(std::vector<u8>& compressed_data) {
 
-  auto& [blockStats, data] = compressed_chunk;
-  auto& blockMeta= *reinterpret_cast<DatablockMeta*>(data.data());
+  auto& blockMeta= *reinterpret_cast<DatablockMeta*>(compressed_data.data());
 
   auto& tupleCount = blockMeta.count;
   auto columnCount = blockMeta.column_count;
@@ -50,7 +49,7 @@ ArrowTableChunk ArrowTableChunkCompressor::decompress(std::tuple<OutputBlockStat
         compressionScheme.decompress(
           reinterpret_cast<INTEGER *>(destination.get()), 
           nullptr,
-          data.data() + columnMeta.offset,
+          compressed_data.data() + columnMeta.offset,
           tupleCount, 
           0);
 
@@ -77,7 +76,7 @@ ArrowTableChunk ArrowTableChunkCompressor::decompress(std::tuple<OutputBlockStat
         compressionScheme.decompress(
           reinterpret_cast<DOUBLE*>(destination.get()), 
           nullptr,
-          data.data() + columnMeta.offset,
+          compressed_data.data() + columnMeta.offset,
           tupleCount,
           0);
 
@@ -103,14 +102,14 @@ ArrowTableChunk ArrowTableChunkCompressor::decompress(std::tuple<OutputBlockStat
 
         auto& scheme = SchemePool::available_schemes->string_schemes[used_compression_scheme];
 
-        auto size = scheme->getDecompressedSizeNoCopy(data.data() + columnMeta.offset,
+        auto size = scheme->getDecompressedSizeNoCopy(compressed_data.data() + columnMeta.offset,
                                                             tupleCount, nullptr);
 
         SIZE destinationSize = size + 8 + SIMD_EXTRA_BYTES + 4096;
 
         auto destination = makeBytesArray(destinationSize);
 
-        scheme->decompressNoCopy(destination.get(), nullptr, data.data() + columnMeta.offset, tupleCount, 0);
+        scheme->decompressNoCopy(destination.get(), nullptr, compressed_data.data() + columnMeta.offset, tupleCount, 0);
         
         auto pointerViewer = StringPointerArrayViewer(destination.get());
 

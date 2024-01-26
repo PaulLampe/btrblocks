@@ -27,7 +27,7 @@ std::shared_ptr<arrow::Table> loadTableFromParquet(const std::string& path, unor
 
     for (int i = 0; i < table->num_columns(); ++i) {
         auto name = table->field(i)->name();
-        if (columns.find(name) != columns.end()) {
+        if (columns.size() == 0 || columns.find(name) != columns.end()) {
             columnIndices.push_back(i);
         }
     }

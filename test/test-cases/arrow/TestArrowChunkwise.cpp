@@ -1,5 +1,4 @@
 #include "./TestArrowDataLoader.hpp"
-#include "arrow/ArrowTableCompressor.hpp"
 #include "arrow/api.h"
 #include "btrblocks.hpp"
 #include "common/Units.hpp"
@@ -12,7 +11,7 @@
 using namespace btrblocks;
 // -------------------------------------------------------------------------------------
 
-TEST(Arrow, Begin) {
+TEST(ArrowChunkwise, Begin) {
   BtrBlocksConfig::get().integers.schemes = defaultIntegerSchemes();
   /*  
   {IntegerSchemeType::UNCOMPRESSED, IntegerSchemeType::ONE_VALUE, IntegerSchemeType::DICT,
@@ -32,86 +31,89 @@ TEST(Arrow, Begin) {
   SchemePool::refresh();
 }
 
-TEST(Arrow, IntegerOneValue) {
+TEST(ArrowChunkwise, IntegerOneValue) {
   EnforceScheme<IntegerSchemeType> enforcer(IntegerSchemeType::ONE_VALUE);
   auto table = loadTableFromFiles({std::string(TEST_DATASET("integer/ONE_VALUE.integer"))});
 
-  checkCompressTable(table);
+  checkCompressTableChunkwise(table);
 }
 
-TEST(Arrow, IntegerDynamicDict) {
+TEST(ArrowChunkwise, IntegerDynamicDict) {
   EnforceScheme<IntegerSchemeType> enforcer(IntegerSchemeType::DICT);
   auto table = loadTableFromFiles({std::string(TEST_DATASET("integer/DICTIONARY_16.integer"))});
 
-  checkCompressTable(table);
+  checkCompressTableChunkwise(table);
 }
 
-TEST(Arrow, IntegerRLE)
+TEST(ArrowChunkwise, IntegerRLE)
 {
   EnforceScheme<IntegerSchemeType> enforcer(IntegerSchemeType::RLE);
   auto table = loadTableFromFiles({std::string(TEST_DATASET("integer/RLE.integer"))});
 
-  checkCompressTable(table);
+  checkCompressTableChunkwise(table);
 }
 
-TEST(Arrow, IntegerMixed) {
+TEST(ArrowChunkwise, IntegerMixed) {
   auto table = loadTableFromFiles({std::string(TEST_DATASET("integer/ONE_VALUE.integer")),
                                    std::string(TEST_DATASET("integer/DICTIONARY_8.integer")),
                                    std::string(TEST_DATASET("integer/DICTIONARY_16.integer"))
                                    });
 
-  checkCompressTable(table);
+  checkCompressTableChunkwise(table);
 }
 
-TEST(Arrow, DoubleOneValue) {
+TEST(ArrowChunkwise, DoubleOneValue) {
   auto table = loadTableFromFiles({std::string(TEST_DATASET("double/ONE_VALUE.double"))});
-  checkCompressTable(table);
+  
+  checkCompressTableChunkwise(table);
 }
 
-TEST(Arrow, DoubleRandom) {
+TEST(ArrowChunkwise, DoubleRandom) {
   auto table = loadTableFromFiles({std::string(TEST_DATASET("double/RANDOM.double"))});
-  checkCompressTable(table);
+  
+  checkCompressTableChunkwise(table);
 }
 
-TEST(Arrow, DoubleRLE)
+TEST(ArrowChunkwise, DoubleRLE)
 {
   EnforceScheme<DoubleSchemeType> enforcer(DoubleSchemeType::RLE);
   auto table = loadTableFromFiles({std::string(TEST_DATASET("double/RANDOM.double"))});
 
-  checkCompressTable(table);
+  checkCompressTableChunkwise(table);
 }
 
-TEST(Arrow, DoubleDecimal) {
+TEST(ArrowChunkwise, DoubleDecimal) {
   EnforceScheme<DoubleSchemeType> enforcer(DoubleSchemeType::PSEUDODECIMAL);
   auto table = loadTableFromFiles({std::string(TEST_DATASET("double/DICTIONARY_8.double"))});
 
-  checkCompressTable(table);
+  checkCompressTableChunkwise(table);
 }
 
-TEST(Arrow, DoubleDynamicDict) {
+TEST(ArrowChunkwise, DoubleDynamicDict) {
   EnforceScheme<DoubleSchemeType> enforcer(DoubleSchemeType::DICT);
   auto table = loadTableFromFiles({std::string(TEST_DATASET("double/DICTIONARY_8.double"))});
 
-  checkCompressTable(table);
+  checkCompressTableChunkwise(table);
 }
 
-TEST(Arrow, DoubleFrequency) {
+TEST(ArrowChunkwise, DoubleFrequency) {
   EnforceScheme<DoubleSchemeType> enforcer(DoubleSchemeType::FREQUENCY);
   auto table = loadTableFromFiles({std::string(TEST_DATASET("double/FREQUENCY.double"))});
 
-  checkCompressTable(table);
+  checkCompressTableChunkwise(table);
 }
 
-TEST(Arrow, StringOneValue) {
+TEST(ArrowChunkwise, StringOneValue) {
   EnforceScheme<StringSchemeType> enforcer(StringSchemeType::ONE_VALUE);
   auto table = loadTableFromFiles({std::string(TEST_DATASET("string/ONE_VALUE.string"))});
-  checkCompressTable(table);
+  
+  checkCompressTableChunkwise(table);
 }
 
-TEST(Arrow, StringCompressedDictionary)
+TEST(ArrowChunkwise, StringCompressedDictionary)
 {
   EnforceScheme<StringSchemeType> enforcer(StringSchemeType::DICT);
   auto table = loadTableFromFiles({std::string(TEST_DATASET("string/COMPRESSED_DICTIONARY.string"))});
 
-  checkCompressTable(table);
+  checkCompressTableChunkwise(table);
 }

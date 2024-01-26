@@ -99,7 +99,6 @@ int main(int argc, char **argv)
 
     spdlog::info("Creating btr files in " + FLAGS_btr);
 
-
     ColumnType typefilter;
     if (FLAGS_typefilter.empty()) {
         typefilter = ColumnType::UNDEFINED;

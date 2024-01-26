@@ -2,8 +2,10 @@
 #include <filesystem>
 #include <fstream>
 #include <random>
+#include <vector>
 #include <tbb/parallel_for_each.h>
 // -------------------------------------------------------------------------------------
+#include "common/Units.hpp"
 #include "gflags/gflags.h"
 #include "tbb/parallel_for.h"
 #include "tbb/task_scheduler_init.h"
@@ -43,14 +45,24 @@ u64 measure(const FileMetadata *metadata, std::vector<std::vector<BtrReader>> &r
 
     auto total_start_time = std::chrono::steady_clock::now();
 
-    tbb::parallel_for_each(columns, [&](u32 column_i) {
+    vector<vector<vector<vector<u8>>>> colData(columns.size());
+
+
+    tbb::parallel_for(0ul, columns.size(), [&](const auto& i) {
+        u32 column_i = columns[i];
+        colData[i] = vector<vector<vector<u8>>>(metadata->parts[column_i].num_parts);
         // TODO not sure if measuring the time like that will cause problems
         auto start_time = std::chrono::steady_clock::now();
         tbb::parallel_for(u32(0), metadata->parts[column_i].num_parts, [&](u32 part_i) {
             auto &reader = readers[column_i][part_i];
+
+            colData[i][part_i] = vector<vector<u8>>(reader.getChunkCount());
+
             tbb::parallel_for(u32(0), reader.getChunkCount(), [&](u32 chunk_i) {
-                thread_local std::vector<u8> decompressed_data;
-                reader.readColumn(decompressed_data, chunk_i);
+                colData[i][part_i][chunk_i] = vector<u8>{};
+
+                //thread_local vector<u8> v{};
+                reader.readColumn(colData[i][part_i][chunk_i], chunk_i);
             });
         });
         auto end_time = std::chrono::steady_clock::now();
@@ -160,6 +172,7 @@ int main(int argc, char **argv) {
     // Prepare the readers
     std::vector<std::vector<BtrReader>> readers(file_metadata->num_columns);
     std::vector<std::vector<std::vector<char>>> compressed_data(file_metadata->num_columns);
+    
     tbb::parallel_for_each(columns, [&](u32 column_i) {
         compressed_data[column_i].resize(file_metadata->parts[column_i].num_parts);
         for (u32 part_i = 0; part_i < file_metadata->parts[column_i].num_parts; part_i++) {

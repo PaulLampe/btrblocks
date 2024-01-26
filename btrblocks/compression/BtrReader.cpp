@@ -31,7 +31,7 @@ BtrReader::~BtrReader() {
 bool BtrReader::readColumn(std::vector<u8>& output_chunk_v, u32 index) {
   // Fetch metadata for column
   auto meta = this->getChunkMetadata(index);
-
+ 
   // Get a pointer to the beginning of the memory area with the data
   auto input_data = static_cast<const u8*>(meta->data);
 

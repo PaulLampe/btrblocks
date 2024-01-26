@@ -1,13 +1,20 @@
 #include "Chunk.hpp"
 // -------------------------------------------------------------------------------------
 #include "common/Exceptions.hpp"
+#include "common/Units.hpp"
 #include "common/Utils.hpp"
+#include "compression/Datablock.hpp"
 // -------------------------------------------------------------------------------------
 
 // -------------------------------------------------------------------------------------
 #include <fstream>
 #include <iomanip>
 #include <memory>
+#include <numeric>
+#include <ostream>
+#include <sstream>
+#include <string>
+#include <vector>
 // -------------------------------------------------------------------------------------
 constexpr uint32_t chunk_part_size_threshold = 16 * 1024 * 1024;
 // -------------------------------------------------------------------------------------
@@ -247,12 +254,41 @@ void ColumnPart::addCompressedChunk(vector<u8>&& chunk) {
   chunks.push_back(chunk);
 }
 
+
 u32 ColumnPart::writeToDisk(const std::string& outputfile) {
   std::ofstream btr_file(outputfile, std::ios::out | std::ios::binary);
   if (!btr_file.good()) {
     perror(outputfile.c_str());
     throw Generic_Exception("Opening btr output file failed");
   }
+
+  auto bytes_written = write(btr_file);
+
+  btr_file.flush();
+  btr_file.close();
+  if (btr_file.fail()) {
+    perror(outputfile.c_str());
+    throw Generic_Exception("Closing btr file failed");
+  }
+  this->reset();
+
+  return bytes_written;
+}
+
+vector<u8> ColumnPart::writeToByteVector() {
+  std::ostringstream stream;
+
+  stream.clear();
+
+  write(stream);
+
+  auto out = stream.str();
+
+  return {out.data(), out.data() + out.length()};
+}
+
+
+u32 ColumnPart::write(std::basic_ostream<char>& btr_file) {
 
   struct ColumnPartMetadata metadata {
     .num_chunks = static_cast<u32>(this->chunks.size())
@@ -278,20 +314,12 @@ u32 ColumnPart::writeToDisk(const std::string& outputfile) {
   // Write chunks
   for (std::size_t chunk_i = 0; chunk_i < chunks.size(); chunk_i++) {
     auto& chunk = this->chunks[chunk_i];
-    btr_file.seekp(diffs[chunk_i], std::ios::cur);
+    vector<u8> v(diffs[chunk_i]);
+    btr_file.write(reinterpret_cast<const char*>(v.data()), diffs[chunk_i]);
     btr_file.write(reinterpret_cast<const char*>(chunk.data()), chunk.size());
   }
 
-  u32 bytes_written = this->total_size + sizeof(metadata) + offsets.size() * sizeof(u32);
-  btr_file.flush();
-  btr_file.close();
-  if (btr_file.fail()) {
-    perror(outputfile.c_str());
-    throw Generic_Exception("Closing btr file failed");
-  }
-  this->reset();
-
-  return bytes_written;
+  return this->total_size + sizeof(metadata) + offsets.size() * sizeof(u32) + std::reduce(diffs.begin(), diffs.end());
 }
 
 void ColumnPart::reset() {

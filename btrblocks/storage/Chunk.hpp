@@ -5,7 +5,11 @@
 #include "StringPointerArrayViewer.hpp"
 #include "common/Units.hpp"
 // -------------------------------------------------------------------------------------
+#include <ios>
+#include <istream>
 #include <memory>
+#include <ostream>
+#include <vector>
 // -------------------------------------------------------------------------------------
 namespace btrblocks {
 // -------------------------------------------------------------------------------------
@@ -109,6 +113,8 @@ class ColumnPart {
   [[nodiscard]] bool canAdd(SIZE chunk_size);
   void addCompressedChunk(vector<u8>&& chunk);
   u32 writeToDisk(const std::string& outputfile);
+  u32 write(std::basic_ostream<char>& outputstream);
+  vector<u8> writeToByteVector();
   void reset();
 };
 // -------------------------------------------------------------------------------------

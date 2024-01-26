@@ -4,7 +4,11 @@
 #include <arrow/array/builder_primitive.h>
 #include <arrow/array/concatenate.h>
 #include <arrow/type_fwd.h>
+#include <cstdint>
 #include <memory>
+#include <vector>
+#include "columnwise/ArrowColumn.hpp"
+#include "common/Units.hpp"
 
 using namespace btrblocks;
 
@@ -40,4 +44,19 @@ ArrowTableChunk ArrowTableWrapper::generateChunk(int64_t offset, int64_t blockSi
   }
 
   return ArrowTableChunk(table->schema(), std::move(columns));
+}
+
+vector<ArrowColumn> ArrowTableWrapper::generateColumns() {
+  vector<ArrowColumn> columns{};
+
+  for (int i = 0; i < table->num_columns(); ++i) {
+    ArrowColumn column{
+      table->field(i),
+      table->column(i)
+    };
+
+    columns.push_back(column);
+  }
+
+  return columns;
 }

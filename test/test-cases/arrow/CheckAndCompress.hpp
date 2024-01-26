@@ -1,3 +1,5 @@
 #include <arrow/api.h>
 
-void checkCompressTable(std::shared_ptr<arrow::Table>& table);
+void checkCompressTableChunkwise(std::shared_ptr<arrow::Table>& table);
+
+void checkCompressTableColumnwise(std::shared_ptr<arrow::Table>& table);
