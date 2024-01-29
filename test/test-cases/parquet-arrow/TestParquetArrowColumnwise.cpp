@@ -49,3 +49,9 @@ TEST(ParquetArrowColumnwise, TestNonNullVarcharColumns) {
 
   checkCompressTableColumnwise(table);
 }
+
+TEST(ParquetArrowColumnwise, TestNullableVarcharColumns) {
+  auto table = loadTableFromParquet({std::string(TEST_DATASET("parquet/YaleLanguages_1_none.parquet"))}, {"classbroad", "classgroup", "classletter", "patrongroupcode"});
+
+  checkCompressTableColumnwise(table);
+}

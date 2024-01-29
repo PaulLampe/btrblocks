@@ -1,14 +1,18 @@
 #include <arrow/api.h>
 #include <arrow/array/array_base.h>
 #include <arrow/type_fwd.h>
+#include <cstdint>
 #include <memory>
 #include <vector>
+#include "../ArrowStringArrayViewer.cpp"
 #include "ArrowColumnChunkCompressor.hpp"
 #include "btrblocks.hpp"
 #include "common/Units.hpp"
 #include "compression/Datablock.hpp"
 #include "compression/SchemePicker.hpp"
-#include "../ArrowStringArrayViewer.cpp"
+#include "extern/RoaringBitmap.hpp"
+#include "storage/StringArrayViewer.hpp"
+#include "storage/StringPointerArrayViewer.hpp"
 
 namespace btrblocks {
 
@@ -27,51 +31,55 @@ SIZE ArrowColumnChunkCompressor<ColumnType::STRING>::compress(const shared_ptr<a
 
   auto array = std::static_pointer_cast<arrow::StringArray>(chunk);
 
-  auto tupleCount = array->length();
-
-  auto arrowStringArrayViewer = ArrowStringArrayViewer(array);
-
   auto dataSize = array->value_offsets()->size() + array->total_values_length();
 
-
-  StringStats stats =
-      StringStats::generateStats(arrowStringArrayViewer,
-                                 array->null_bitmap_data(), tupleCount, dataSize );
+  StringStats stats = StringStats::generateArrowStats(array, dataSize);
 
   StringScheme& preferred_scheme =
       StringSchemePicker::chooseScheme(stats, config.strings.max_cascade_depth);
 
   meta->compression_type = static_cast<u8>(preferred_scheme.schemeType());
 
-  auto compressedColumnSize = preferred_scheme.compress(arrowStringArrayViewer, array->null_bitmap_data(), meta->data, stats);
+  auto arrowStringArrayViewer = ArrowStringArrayViewer(array);
 
-  return sizeof(ColumnChunkMeta) + compressedColumnSize;
+  auto compressedColumnSize = preferred_scheme.compress(
+      arrowStringArrayViewer, array->null_bitmap_data(), meta->data, stats);
+
+  return compressedColumnSize;
 }
 
 template <>
 shared_ptr<arrow::Array> ArrowColumnChunkCompressor<ColumnType::STRING>::decompress(
     ColumnChunkMeta* columnChunk) {
+  auto tupleCount = columnChunk->tuple_count;
+
   const auto used_compression_scheme = static_cast<StringSchemeType>(columnChunk->compression_type);
 
   auto& scheme = SchemePool::available_schemes->string_schemes[used_compression_scheme];
 
   auto size =
       scheme->getDecompressedSizeNoCopy(columnChunk->data, columnChunk->tuple_count, nullptr);
-
   SIZE destinationSize = size + 8 + SIMD_EXTRA_BYTES + 4096;
-
   auto destination = makeBytesArray(destinationSize);
 
-  scheme->decompressNoCopy(destination.get(), nullptr, columnChunk->data, columnChunk->tuple_count,
-                           0);
+  auto bitmap = decompressBitmap(columnChunk);
+  auto bitmapData = bitmap == nullptr ? nullptr : bitmap->data();
+
+  // TODO: Write a wrapper to turn the string pointer arrays to different arrow array types (DictArray, REE Array, etc.) so we dont have
+  // to build these huge copied arrays 
+  scheme->decompressNoCopy(destination.get(), nullptr, columnChunk->data, tupleCount, 0);
 
   auto pointerViewer = StringPointerArrayViewer(destination.get());
 
   arrow::StringBuilder stringBuilder;
-  stringBuilder.Resize(columnChunk->tuple_count).ok();
+  stringBuilder.Resize(tupleCount).ok();
 
-  for (SIZE i = 0; i < columnChunk->tuple_count; ++i) {
-    stringBuilder.Append(pointerViewer(i)).ok();
+  for (SIZE i = 0; i < tupleCount; ++i) {
+    if (bitmap == nullptr || (bitmapData[i / 8] & (1 << (i & 0x07))) != 0) {
+      stringBuilder.Append(pointerViewer(i)).ok();
+    } else {
+      stringBuilder.AppendNull().ok();
+    }
   }
 
   return stringBuilder.Finish().ValueOrDie();

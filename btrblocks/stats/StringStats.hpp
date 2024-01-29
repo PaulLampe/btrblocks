@@ -5,6 +5,7 @@
 #include "storage/StringArrayViewer.hpp"
 // -------------------------------------------------------------------------------------
 #include <set>
+#include <arrow/api.h>
 // -------------------------------------------------------------------------------------
 namespace btrblocks {
 // -------------------------------------------------------------------------------------
@@ -24,6 +25,10 @@ struct StringStats {
                                    const BITMAP* nullmap,
                                    u32 tuple_count,
                                    SIZE column_data_size);
+  static StringStats generateArrowStats(
+    const std::shared_ptr<arrow::StringArray>& array,
+    SIZE column_data_size
+  );
 };
 // -------------------------------------------------------------------------------------
 }  // namespace btrblocks

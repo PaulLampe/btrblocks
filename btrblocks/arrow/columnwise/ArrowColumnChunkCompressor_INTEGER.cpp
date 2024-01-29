@@ -30,7 +30,7 @@ template<> SIZE ArrowColumnChunkCompressor<ColumnType::INTEGER>::compress(const 
                                     config.integers.max_cascade_depth, afterSize,
                                     meta->compression_type);
 
-    return sizeof(ColumnChunkMeta) + afterSize;
+    return afterSize;
 }
 
 template<> shared_ptr<arrow::Array> ArrowColumnChunkCompressor<ColumnType::INTEGER>::decompress(ColumnChunkMeta* columnChunk) {
@@ -39,9 +39,7 @@ template<> shared_ptr<arrow::Array> ArrowColumnChunkCompressor<ColumnType::INTEG
         auto& compressionScheme = IntegerSchemePicker::MyTypeWrapper::getScheme(columnChunk->compression_type);
 
         auto newBuffer = arrow::AllocateBuffer(tupleCount * sizeof(INTEGER) + SIMD_EXTRA_BYTES);
-
         shared_ptr<arrow::Buffer> dataBuffer{newBuffer.ValueOrDie().release()};
-
         auto dest = dataBuffer->mutable_data();
 
         compressionScheme.decompress(
@@ -51,7 +49,9 @@ template<> shared_ptr<arrow::Array> ArrowColumnChunkCompressor<ColumnType::INTEG
           tupleCount,
           0);
 
-        std::vector<std::shared_ptr<arrow::Buffer>> buffers = {nullptr, dataBuffer};
+        auto nullmapBuffer = decompressBitmap(columnChunk);
+
+        std::vector<std::shared_ptr<arrow::Buffer>> buffers = {nullmapBuffer, dataBuffer};
         auto arrayData = arrow::ArrayData::Make(arrow::int32(), tupleCount, buffers);
 
         return arrow::MakeArray(arrayData);

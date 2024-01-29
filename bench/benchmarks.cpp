@@ -17,7 +17,7 @@ int main(int argc, char** argv) {
   std::cout << "\033[0;31mSIMD DISABLED\033[0m" << std::endl;
 #endif
   btrbench::RegisterSingleBenchmarks();
-  benchmark::RegisterBenchmark("LOCAL_DECOMPRESSION",btrbench::BtrBlocksDecompressionBenchmark, vector<ColumnType>{ColumnType::DOUBLE});
+  benchmark::RegisterBenchmark("LOCAL_DECOMPRESSION",btrbench::BtrBlocksDecompressionBenchmark, vector<ColumnType>{ColumnType::DOUBLE, ColumnType::INTEGER, ColumnType::STRING});
   benchmark::Initialize(&argc, argv);
   benchmark::RunSpecifiedBenchmarks();
 }

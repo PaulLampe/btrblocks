@@ -29,13 +29,14 @@ struct ArrowColumn {
   arrow::ArrayVector chunks;
   ColumnType type;
 
+  static shared_ptr<arrow::Field> arrowFieldFromColumnType(const ColumnType& type);
+
  private:
   static vector<shared_ptr<arrow::Array>> getChunks(shared_ptr<arrow::ChunkedArray>& data);
   static shared_ptr<arrow::Array> generateChunk(std::shared_ptr<arrow::ChunkedArray>& data, int64_t offset, int64_t& blockSize);
-  static shared_ptr<arrow::ChunkedArray> assembleChunks(arrow::ArrayVector& chunks);
+  static shared_ptr<arrow::ChunkedArray> assembleChunks(const arrow::ArrayVector& chunks, const std::shared_ptr<arrow::DataType>& type);
 
   static ColumnType columnTypeFromArrowField(shared_ptr<arrow::Field>& field);
-  static shared_ptr<arrow::Field> arrowFieldFromColumnType(ColumnType& type);
 };
 
 }  // namespace btrblocks

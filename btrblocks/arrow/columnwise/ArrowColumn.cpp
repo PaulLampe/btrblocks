@@ -6,6 +6,7 @@
 #include <arrow/table.h>
 #include <arrow/type.h>
 #include <arrow/type_fwd.h>
+#include <algorithm>
 #include <memory>
 #include <stdexcept>
 #include <string>
@@ -24,7 +25,7 @@ ArrowColumn::ArrowColumn(shared_ptr<arrow::Field>&& _field, shared_ptr<arrow::Ch
 
 ArrowColumn::ArrowColumn(ColumnType type, arrow::ArrayVector& chunks) : chunks(chunks), type(type) {
   field = arrowFieldFromColumnType(type);
-  data = assembleChunks(chunks);
+  data = assembleChunks(chunks, field->type());
 }
 
 ColumnType ArrowColumn::columnTypeFromArrowField(shared_ptr<arrow::Field>& field) {
@@ -46,7 +47,7 @@ ColumnType ArrowColumn::columnTypeFromArrowField(shared_ptr<arrow::Field>& field
 }
 
 // TODO: Get column name from somewhere
-shared_ptr<arrow::Field> ArrowColumn::arrowFieldFromColumnType(ColumnType& type) {
+shared_ptr<arrow::Field> ArrowColumn::arrowFieldFromColumnType(const ColumnType& type) {
   switch (type) {
     case ColumnType::INTEGER:
       return arrow::field("int_col", arrow::int32());
@@ -70,14 +71,15 @@ vector<shared_ptr<arrow::Array>> ArrowColumn::getChunks(shared_ptr<arrow::Chunke
   vector<shared_ptr<arrow::Array>> chunks(numberOfChunks);
 
   for (int64_t chunk_i = 0; chunk_i < numberOfChunks; ++chunk_i) {
-    chunks[chunk_i] = generateChunk(data, chunk_i * blockSize, blockSize);
+    auto chunkSize = min(blockSize, tupleCount - chunk_i * blockSize);
+    chunks[chunk_i] = generateChunk(data, chunk_i * blockSize, chunkSize);
   }
 
   return chunks;
 }
 
-shared_ptr<arrow::ChunkedArray> ArrowColumn::assembleChunks(arrow::ArrayVector& chunks) {
-  return arrow::ChunkedArray::Make(chunks).ValueOrDie();
+shared_ptr<arrow::ChunkedArray> ArrowColumn::assembleChunks(const arrow::ArrayVector& chunks, const std::shared_ptr<arrow::DataType>& type) {
+  return arrow::ChunkedArray::Make(chunks, type).ValueOrDie();
 }
 
 shared_ptr<arrow::Array> ArrowColumn::generateChunk(std::shared_ptr<arrow::ChunkedArray>& data,

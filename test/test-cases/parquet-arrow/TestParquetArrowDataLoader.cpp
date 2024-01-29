@@ -14,13 +14,23 @@
 using namespace std;
 
 std::shared_ptr<arrow::Table> loadTableFromParquet(const std::string& path, unordered_set<string> columns){
-    arrow::MemoryPool* pool = arrow::default_memory_pool();
-    std::shared_ptr<arrow::io::RandomAccessFile> input = arrow::io::ReadableFile::Open(path).ValueOrDie();
+    std::shared_ptr<arrow::io::RandomAccessFile> input =
+      arrow::io::ReadableFile::Open(path).ValueOrDie();
 
-    std::unique_ptr<parquet::arrow::FileReader> arrow_reader;
-    parquet::arrow::OpenFile(input, pool, &arrow_reader).ok();
+  unique_ptr<parquet::arrow::FileReader> arrow_reader;
 
-    std::shared_ptr<arrow::Table> table;
+  std::unique_ptr<parquet::ParquetFileReader> parquet_reader =
+      parquet::ParquetFileReader::OpenFile(path, false);
+
+  auto arrow_reader_properties = parquet::default_arrow_reader_properties();
+  arrow_reader_properties.set_use_threads(true);
+  arrow_reader_properties.set_pre_buffer(true);
+
+  parquet::arrow::FileReader::Make(arrow::default_memory_pool(), std::move(parquet_reader),
+                                   arrow_reader_properties, &arrow_reader)
+      .ok();
+
+  std::shared_ptr<arrow::Table> table;
     arrow_reader->ReadTable(&table).ok();
 
     vector<int> columnIndices{};

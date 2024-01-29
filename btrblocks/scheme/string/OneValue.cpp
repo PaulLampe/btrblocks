@@ -44,7 +44,9 @@ u32 OneValue::getDecompressedSize(const u8* src, u32 tuple_count, BitmapWrapper*
    */
   auto& col_struct = *reinterpret_cast<const OneValueStructure*>(src);
   u32 total_size = (tuple_count + 1) * sizeof(StringArrayViewer::Slot);
-  total_size += nullmap->cardinality() * col_struct.length;
+  if (nullmap != nullptr) {
+    total_size += nullmap->cardinality() * col_struct.length;
+  }
   return total_size;
 }
 // -------------------------------------------------------------------------------------

@@ -1,11 +1,14 @@
 #include <arrow/api.h>
 #include <arrow/io/file.h>
+#include <arrow/table.h>
 #include <oneapi/tbb/detail/_machine.h>
 #include <parquet/arrow/reader.h>
 #include <tbb/parallel_for.h>
 #include <tbb/task.h>
+#include <tbb/task_arena.h>
 #include <tbb/task_scheduler_init.h>
 #include <chrono>
+#include <cstdint>
 #include <functional>
 #include <iostream>
 #include <iterator>
@@ -29,15 +32,16 @@ std::shared_ptr<arrow::Table> loadTableFromParquet(const std::string& path,
 
   unique_ptr<parquet::arrow::FileReader> arrow_reader;
 
-  std::unique_ptr<parquet::ParquetFileReader> parquet_reader = parquet::ParquetFileReader::OpenFile(
-                        path,
-                        false);
+  std::unique_ptr<parquet::ParquetFileReader> parquet_reader =
+      parquet::ParquetFileReader::OpenFile(path, false);
 
   auto arrow_reader_properties = parquet::default_arrow_reader_properties();
   arrow_reader_properties.set_use_threads(true);
   arrow_reader_properties.set_pre_buffer(true);
-                
-  parquet::arrow::FileReader::Make(arrow::default_memory_pool(), std::move(parquet_reader),arrow_reader_properties, &arrow_reader).ok();
+
+  parquet::arrow::FileReader::Make(arrow::default_memory_pool(), std::move(parquet_reader),
+                                   arrow_reader_properties, &arrow_reader)
+      .ok();
 
   std::shared_ptr<arrow::Table> table;
   arrow_reader->ReadTable(&table).ok();
@@ -70,16 +74,15 @@ void debugTables(shared_ptr<arrow::Table>& table, shared_ptr<arrow::Table>& orig
 }
 
 static void measure(benchmark::State& state, std::function<void()>&& fun, std::string&& key) {
+  auto start_time = std::chrono::steady_clock::now();
 
-    auto start_time = std::chrono::steady_clock::now();
+  fun();
 
-    fun();
+  auto end_time = std::chrono::steady_clock::now();
 
-    auto end_time  = std::chrono::steady_clock::now();
+  auto diff = std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time);
 
-    auto diff = std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time);
-
-    state.counters[key] = diff.count();
+  state.counters[key] = diff.count();
 }
 
 const std::string decomp_bench_dataset = "decompression-bench-dataset/";
@@ -96,8 +99,6 @@ static void BtrBlocksDecompressionBenchmark(benchmark::State& state,
                                             const vector<btrblocks::ColumnType>& types) {
   SetupAllDecompSchemes();
 
-  tbb::task_scheduler_init(32);
-
   for (auto _ : state) {
     vector<string> columnKeys{};
 
@@ -107,47 +108,70 @@ static void BtrBlocksDecompressionBenchmark(benchmark::State& state,
     std::vector<btrblocks::u8> raw_file_metadata;
     btrblocks::FileMetadata* file_metadata;
 
-    measure(state, [&]() {
-      auto metaLocalPath = decomp_bench_dataset + "metadata";
+    measure(
+        state,
+        [&]() {
+          auto metaLocalPath = decomp_bench_dataset + "metadata";
 
-      btrblocks::Utils::readFileToMemory(metaLocalPath, raw_file_metadata);
-      file_metadata = reinterpret_cast<btrblocks::FileMetadata*>(raw_file_metadata.data());
+          btrblocks::Utils::readFileToMemory(metaLocalPath, raw_file_metadata);
+          file_metadata = reinterpret_cast<btrblocks::FileMetadata*>(raw_file_metadata.data());
 
-      compressedData.resize(file_metadata->num_columns);
+          compressedData.resize(file_metadata->num_columns);
 
-      for (int i = 0; i < file_metadata->num_columns; ++i) {
-        if (std::find(types.begin(),types.end(),file_metadata->parts[i].type) != types.end()) {
-          selectedColumnIndices.push_back(i);
-        }
+          for (uint32_t i = 0; i < file_metadata->num_columns; ++i) {
+            if (std::find(types.begin(), types.end(), file_metadata->parts[i].type) !=
+                types.end()) {
+              selectedColumnIndices.push_back(i);
+            }
+          }
+
+          tbb::parallel_for(
+              static_cast<btrblocks::u32>(0), file_metadata->num_columns,
+              [&](const auto& column_i) {
+                if (std::find(selectedColumnIndices.begin(), selectedColumnIndices.end(),
+                              column_i) != selectedColumnIndices.end()) {
+                  compressedData[column_i].resize(file_metadata->parts[column_i].num_parts);
+
+                  tbb::parallel_for(
+                      static_cast<btrblocks::u32>(0), file_metadata->parts[column_i].num_parts,
+                      [&](const auto& part_i) {
+                        auto columnPartPath = decomp_bench_dataset + "column" +
+                                              to_string(column_i) + "_part" + to_string(part_i);
+
+                        btrblocks::Utils::readFileToMemory(columnPartPath,
+                                                           compressedData[column_i][part_i]);
+                      });
+                }
+              });
+        },
+        "file_read_time");
+
+    shared_ptr<arrow::Table> decompressedTable;
+
+    measure(
+        state,
+        [&]() {
+          decompressedTable = btrblocks::ArrowColumnwiseTableCompressor::decompress(
+              file_metadata, compressedData, selectedColumnIndices);
+        },
+        "decompression_time");
+
+    /*shared_ptr<arrow::Table> originalTable;
+    measure(
+        state,
+        [&]() {
+          originalTable = loadTableFromParquet(decomp_bench_dataset + "original.parquet", {});
+        },
+        "parquet_decompression_time");
+
+    for (auto& index : selectedColumnIndices) {
+      auto column = originalTable->column(index);
+      if (column->null_count() > 0) {
+        std::cout << originalTable->field(index)->name() << ": " << column->null_count() << "\n";
       }
+    }*/
 
-      tbb::parallel_for(btrblocks::u32(0), file_metadata->num_columns, [&](const auto& column_i) {
-        
-        if (std::find(selectedColumnIndices.begin(),selectedColumnIndices.end(), column_i) != selectedColumnIndices.end()) {
-          
-          compressedData[column_i].resize(file_metadata->parts[column_i].num_parts);
-
-          tbb::parallel_for (btrblocks::u32(0), file_metadata->parts[column_i].num_parts, [&](const auto& part_i){
-            auto columnPartPath =
-                decomp_bench_dataset + "column" + to_string(column_i) + "_part" + to_string(part_i);
-
-            btrblocks::Utils::readFileToMemory(columnPartPath, compressedData[column_i][part_i]);
-          });
-        }
-      });
-    }, "file_read_time");
-
-    measure(state, [&]() {
-      auto table = btrblocks::ArrowColumnwiseTableCompressor::decompress(
-        file_metadata, compressedData, selectedColumnIndices);
-    }, "decompression_time");
-
-
-    /*measure(state, [&]() {
-      auto originalTable = loadTableFromParquet(decomp_bench_dataset + "original.parquet", {});
-    }, "parquet_decompression_time");*/
-
-    // debugTables(table, originalTable);
+    // debugTables(decompressedTable, originalTable);
   }
 }
 }  // namespace btrbench

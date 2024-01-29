@@ -45,12 +45,13 @@ void compareArrays(shared_ptr<arrow::ChunkedArray> arr1, shared_ptr<arrow::Chunk
   for (int i = 0; i < arr1->length(); i++) {
     auto val1 = arr1->GetScalar(i).ValueOrDie()->ToString();
     auto val2 = arr2->GetScalar(i).ValueOrDie()->ToString();
+
   }
 }
 
 void checkCompressTableColumnwise(std::shared_ptr<arrow::Table>& table) {
   auto [fileMeta, compressedData] = ArrowColumnwiseTableCompressor::compress(table);
-
+  
   vector< vector< vector<u8> > > writtenParts{};
   vector<SIZE> columnIndices{};
   SIZE i = 0;
@@ -68,8 +69,6 @@ void checkCompressTableColumnwise(std::shared_ptr<arrow::Table>& table) {
   for (int i = 0; i < table->schema()->num_fields(); ++i) {
     auto originalColumn = table->column(i);
     auto decompressedColumn = decompressedOutput->column(i);
-
-    compareArrays(originalColumn, decompressedColumn);
 
     assert(originalColumn->Equals(decompressedColumn));
   }
