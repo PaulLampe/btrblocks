@@ -49,3 +49,9 @@ TEST(ParquetArrowChunkwise, TestNonNullVarcharColumns) {
 
   checkCompressTableChunkwise(table);
 }
+
+TEST(ParquetArrowChunkwise, TestNullableVarcharColumns) {
+  auto table = loadTableFromParquet({std::string(TEST_DATASET("parquet/YaleLanguages_1_none.parquet"))}, {"classbroad", "classgroup", "classletter", "patrongroupcode"});
+
+  checkCompressTableChunkwise(table);
+}

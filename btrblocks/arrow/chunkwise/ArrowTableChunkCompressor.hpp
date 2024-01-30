@@ -7,16 +7,18 @@ namespace btrblocks {
 
 // Compresses one chunk to a BytesArray and handles metadata
 struct ArrowTableChunkCompressor {
-public:
+ public:
   ArrowTableChunkCompressor() = default;
 
   static std::tuple<OutputBlockStats, std::vector<u8>> compress(ArrowTableChunk& chunk);
 
   static ArrowTableChunk decompress(std::vector<u8>& compressed_data);
 
-private:
-
+ private:
   static OutputBlockStats initOutputStats_(SIZE columnCount, SIZE datablockMetaBufferSize);
+  static shared_ptr<arrow::Buffer> decompressBitmap(ColumnMeta& columnChunk,
+                                                    SIZE tupleCount,
+                                                    u8* src);
 };
 
 }  // namespace btrblocks

@@ -8,6 +8,7 @@
 #include "ArrowChunkwiseTableCompressor.hpp"
 #include "../ArrowTableWrapper.hpp"
 #include "ArrowTableChunkCompressor.hpp"
+#include "common/Exceptions.hpp"
 #include "common/Units.hpp"
 #include "compression/Compressor.hpp"
 #include "storage/MMapVector.hpp"
@@ -48,7 +49,7 @@ std::shared_ptr<arrow::Table> ArrowChunkwiseTableCompressor::decompress(std::sha
     for (SIZE i = 0; i < columnCount; ++i) {
       auto [type, data] = decompressedChunk.getSchemeAndColumn(i);
 
-      assert(fields[i]->Equals(type));
+      die_if(fields[i]->Equals(type));
 
       chunkedColumns[i].push_back(data);
     }

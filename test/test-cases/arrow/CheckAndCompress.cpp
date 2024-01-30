@@ -8,6 +8,13 @@
 #include "arrow/columnwise/ArrowColumnwiseTableCompressor.hpp"
 #include "test-cases/TestHelper.hpp"
 
+void compareArrays(shared_ptr<arrow::ChunkedArray> arr1, shared_ptr<arrow::ChunkedArray> arr2) {
+  for (int i = 0; i < arr1->length(); i++) {
+    auto val1 = arr1->GetScalar(i).ValueOrDie()->ToString();
+    auto val2 = arr2->GetScalar(i).ValueOrDie()->ToString();
+  }
+}
+
 void printAverageCompressionRatio(
     std::shared_ptr<vector<tuple<OutputBlockStats, vector<u8>>>>& output) {
   double compressionRatioSum =
@@ -37,15 +44,9 @@ void checkCompressTableChunkwise(std::shared_ptr<arrow::Table>& table) {
     auto originalColumn = table->column(i);
     auto decompressedColumn = decompressedOutput->column(i);
 
+    compareArrays(originalColumn, decompressedColumn);
+
     assert(originalColumn->Equals(decompressedColumn));
-  }
-}
-
-void compareArrays(shared_ptr<arrow::ChunkedArray> arr1, shared_ptr<arrow::ChunkedArray> arr2) {
-  for (int i = 0; i < arr1->length(); i++) {
-    auto val1 = arr1->GetScalar(i).ValueOrDie()->ToString();
-    auto val2 = arr2->GetScalar(i).ValueOrDie()->ToString();
-
   }
 }
 
@@ -63,7 +64,7 @@ void checkCompressTableColumnwise(std::shared_ptr<arrow::Table>& table) {
     }
   }
 
-  auto decompressedOutput = ArrowColumnwiseTableCompressor::decompress(fileMeta.get(), writtenParts, columnIndices);
+  auto decompressedOutput = ArrowColumnwiseTableCompressor::decompressTable(fileMeta.get(), writtenParts, columnIndices);
 
   // TODO: Save column name in meta
   for (int i = 0; i < table->schema()->num_fields(); ++i) {
