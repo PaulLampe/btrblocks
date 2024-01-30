@@ -64,7 +64,7 @@ void checkCompressTableColumnwise(std::shared_ptr<arrow::Table>& table) {
     }
   }
 
-  auto decompressedOutput = ArrowColumnwiseTableCompressor::decompressTable(fileMeta.get(), writtenParts, columnIndices);
+  auto decompressedOutput = ArrowColumnwiseTableCompressor::decompress(fileMeta.get(), writtenParts, columnIndices);
 
   // TODO: Save column name in meta
   for (int i = 0; i < table->schema()->num_fields(); ++i) {
