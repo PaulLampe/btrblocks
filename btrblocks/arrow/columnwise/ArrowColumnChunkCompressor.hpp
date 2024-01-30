@@ -32,7 +32,7 @@ vector<u8> ArrowColumnChunkCompressor<COLUMN_TYPE>::compress(const shared_ptr<ar
   const SIZE tupleCount = chunk->length();
 
   const u32 initialOutputSize =
-      sizeof(ColumnChunkMeta) + 10 * getChunkByteSize(chunk) + sizeof(BITMAP) * tupleCount;
+      sizeof(ColumnChunkMeta) + 2 * getChunkByteSize(chunk) + sizeof(BITMAP) * tupleCount;
 
   vector<u8> output(initialOutputSize);
 

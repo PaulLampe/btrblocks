@@ -1,5 +1,6 @@
 #include <arrow/api.h>
 #include <arrow/array/array_base.h>
+#include <arrow/array/array_binary.h>
 #include <arrow/type_fwd.h>
 #include <cstdint>
 #include <memory>
@@ -21,7 +22,7 @@ using namespace std;
 template <>
 SIZE ArrowColumnChunkCompressor<ColumnType::STRING>::getChunkByteSize(
     const shared_ptr<arrow::Array>& chunk) {
-  return sizeof(DOUBLE) * chunk->length();
+      return static_pointer_cast<arrow::StringArray>(chunk)->total_values_length();
 }
 
 template <>
