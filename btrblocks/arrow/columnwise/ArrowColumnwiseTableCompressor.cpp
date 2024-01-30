@@ -1,3 +1,4 @@
+#include <arrow/record_batch.h>
 #include <arrow/table.h>
 #include <arrow/type.h>
 #include <arrow/type_fwd.h>
@@ -7,6 +8,8 @@
 #include <vector>
 #include "arrow/ArrowTableWrapper.hpp"
 #include "arrow/columnwise/ArrowColumn.hpp"
+#include "btrblocks.hpp"
+#include "common/Exceptions.hpp"
 #include "common/Units.hpp"
 #include "compression/Datablock.hpp"
 #include "storage/Chunk.hpp"
@@ -33,13 +36,15 @@ tuple< unique_ptr < FileMetadata >, vector< vector< ColumnPart > > > ArrowColumn
   auto columns = wrapper.generateColumns();
   vector< vector< ColumnPart > > compressedColumns{};
 
+  // Update file meta 
+  meta->num_chunks = ceil(table->num_rows() * 1.00 / BtrBlocksConfig::get().block_size);
+
   for (SIZE column_i = 0; column_i < columns.size(); column_i++) {
     auto& column = columns[column_i];
 
-    auto parts = ArrowColumnCompressor::compressColumn(column);
+    die_if(meta->num_chunks == column.chunks.size());
 
-    // Update file meta 
-    meta->num_chunks += parts.size();
+    auto parts = ArrowColumnCompressor::compressColumn(column);
 
     auto& partInfo = meta->parts[column_i];
     partInfo.num_parts = parts.size();
@@ -47,7 +52,6 @@ tuple< unique_ptr < FileMetadata >, vector< vector< ColumnPart > > > ArrowColumn
 
     compressedColumns.push_back(parts);
   }
-
 
   return make_tuple(std::move(meta), compressedColumns);
 };
