@@ -3,6 +3,7 @@
 #include "compression/Compressor.hpp"
 #include "scheme/CompressionScheme.hpp"
 #include "storage/Chunk.hpp"
+#include "storage/StringArrayViewer.hpp"
 // -------------------------------------------------------------------------------------
 #include <unordered_map>
 // -------------------------------------------------------------------------------------

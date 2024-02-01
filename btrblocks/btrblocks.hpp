@@ -13,6 +13,9 @@
 #include "arrow/columnwise/ArrowColumnwiseTableCompressor.hpp"
 #include "arrow/columnwise/ArrowColumnCompressor.hpp"
 #include "arrow/columnwise/ArrowColumn.hpp"
+#include "arrow/ArrowWriter.hpp"
+#include "arrow/ArrowMetaData.hpp"
+#include "arrow/processing/LocalArrowReader.hpp"
 #include "scheme/SchemeConfig.hpp"
 #include "scheme/SchemeType.hpp"
 // ------------------------------------------------------------------------------

@@ -6,7 +6,9 @@
 #include <cstdint>
 #include <memory>
 #include <stdexcept>
+#include <vector>
 #include "ArrowColumnChunkCompressor.hpp"
+#include "ArrowColumnChunkDecompressor.hpp"
 #include "arrow/columnwise/ArrowColumn.hpp"
 #include "common/Exceptions.hpp"
 #include "common/Units.hpp"
@@ -48,7 +50,7 @@ vector<ColumnPart> ArrowColumnCompressor::compressColumn(ArrowColumn& column) {
 }
 
 ArrowColumn ArrowColumnCompressor::decompressColumn(vector<vector<u8>>& parts,
-                                                    ColumnPartInfo& columnInfo) {
+                                                    ArrowMetaData::ArrowColumnMetaData& columnInfo) {
   vector<SIZE> partOffsets(parts.size() + 1);
   partOffsets[0] = 0;
 
@@ -63,24 +65,9 @@ ArrowColumn ArrowColumnCompressor::decompressColumn(vector<vector<u8>>& parts,
     auto meta = reinterpret_cast<ColumnPartMetadata*>(parts[part_i].data());
 
     tbb::parallel_for(u32(0), meta->num_chunks, [&](const auto& chunk_i) {
-      auto ptr = reinterpret_cast<ColumnChunkMeta*>(parts[part_i].data() + meta->offsets[chunk_i]);
+      auto columnChunk = reinterpret_cast<ColumnChunkMeta*>(parts[part_i].data() + meta->offsets[chunk_i]);
 
-      switch (columnInfo.type) {
-        case ColumnType::INTEGER:
-          chunks[partOffsets[part_i] + chunk_i] =
-              ArrowColumnChunkCompressor<ColumnType::INTEGER>::decompress(ptr);
-          break;
-        case ColumnType::DOUBLE:
-          chunks[partOffsets[part_i] + chunk_i] =
-              ArrowColumnChunkCompressor<ColumnType::DOUBLE>::decompress(ptr);
-          break;
-        case ColumnType::STRING:
-          chunks[partOffsets[part_i] + chunk_i] =
-              ArrowColumnChunkCompressor<ColumnType::STRING>::decompress(ptr);
-          break;
-        default:
-          throw runtime_error("Not implemented");
-      }
+      chunks[partOffsets[part_i] + chunk_i] = ArrowColumnChunkDecompressor::decompress(columnChunk);
     });
   });
 

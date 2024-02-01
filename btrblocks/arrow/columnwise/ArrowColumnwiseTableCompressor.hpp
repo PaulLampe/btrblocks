@@ -6,6 +6,7 @@
 #include "storage/Chunk.hpp"
 #include "storage/MMapVector.hpp"
 #include "arrow/api.h"
+#include "../ArrowMetaData.hpp"
 
 namespace btrblocks {
 
@@ -16,9 +17,9 @@ struct ArrowColumnwiseTableCompressor {
  public:
   ArrowColumnwiseTableCompressor() = default;
 
-  static tuple< unique_ptr<FileMetadata>, vector< vector< ColumnPart > > > compress(shared_ptr<arrow::Table>& table);
+  static tuple< ArrowMetaData, vector< vector< ColumnPart > > > compress(shared_ptr<arrow::Table>& table);
 
-  static shared_ptr<arrow::Table> decompress(FileMetadata* meta, vector< vector< vector<u8> > >& compressedTable, vector<SIZE>& columnIndices);
+  static shared_ptr<arrow::Table> decompress(ArrowMetaData& meta, vector< vector< vector<u8> > >& compressedTable, vector<SIZE>& columnIndices);
 };
 
 }  // namespace btrblocks

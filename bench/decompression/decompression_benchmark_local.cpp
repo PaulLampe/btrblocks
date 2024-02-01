@@ -15,6 +15,7 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include "arrow/ArrowMetaData.hpp"
 #include "benchmark/benchmark.h"
 #include "btrblocks.hpp"
 #include "common/Units.hpp"
@@ -85,7 +86,7 @@ static void measure(benchmark::State& state, std::function<void()>&& fun, std::s
   state.counters[key] = diff.count();
 }
 
-const std::string decomp_bench_dataset = "decompression-bench-dataset/";
+const std::string decomp_bench_dataset = "parquet-to-btr/";
 
 static void SetupAllDecompSchemes() {
   btrblocks::BtrBlocksConfig::get().integers.schemes = btrblocks::defaultIntegerSchemes();
@@ -106,37 +107,37 @@ static void BtrBlocksDecompressionBenchmark(benchmark::State& state,
     vector<btrblocks::SIZE> selectedColumnIndices;
 
     std::vector<btrblocks::u8> raw_file_metadata;
-    btrblocks::FileMetadata* file_metadata;
+    btrblocks::ArrowMetaData file_metadata;
 
     measure(
         state,
         [&]() {
-          auto metaLocalPath = decomp_bench_dataset + "metadata";
+          auto metaLocalPath = decomp_bench_dataset + "metadata.btr";
 
           btrblocks::Utils::readFileToMemory(metaLocalPath, raw_file_metadata);
-          file_metadata = reinterpret_cast<btrblocks::FileMetadata*>(raw_file_metadata.data());
+          file_metadata = btrblocks::ArrowMetaData(raw_file_metadata);
 
-          compressedData.resize(file_metadata->num_columns);
+          compressedData.resize(file_metadata.numColumns);
 
-          for (uint32_t i = 0; i < file_metadata->num_columns; ++i) {
-            if (std::find(types.begin(), types.end(), file_metadata->parts[i].type) !=
+          for (uint32_t i = 0; i < file_metadata.numColumns; ++i) {
+            if (std::find(types.begin(), types.end(), file_metadata.columnMeta[i].type) !=
                 types.end()) {
               selectedColumnIndices.push_back(i);
             }
           }
 
           tbb::parallel_for(
-              static_cast<btrblocks::u32>(0), file_metadata->num_columns,
+              static_cast<btrblocks::u32>(0), file_metadata.numColumns,
               [&](const auto& column_i) {
                 if (std::find(selectedColumnIndices.begin(), selectedColumnIndices.end(),
                               column_i) != selectedColumnIndices.end()) {
-                  compressedData[column_i].resize(file_metadata->parts[column_i].num_parts);
+                  compressedData[column_i].resize(file_metadata.columnMeta[column_i].numParts);
 
                   tbb::parallel_for(
-                      static_cast<btrblocks::u32>(0), file_metadata->parts[column_i].num_parts,
+                      static_cast<btrblocks::u32>(0), file_metadata.columnMeta[column_i].numParts,
                       [&](const auto& part_i) {
                         auto columnPartPath = decomp_bench_dataset + "column" +
-                                              to_string(column_i) + "_part" + to_string(part_i);
+                                              to_string(column_i) + "_part" + to_string(part_i) + ".btr";
 
                         btrblocks::Utils::readFileToMemory(columnPartPath,
                                                            compressedData[column_i][part_i]);
@@ -151,10 +152,11 @@ static void BtrBlocksDecompressionBenchmark(benchmark::State& state,
     measure(
         state,
         [&]() {
-          decompressedTable = btrblocks::ArrowColumnwiseTableCompressor::decompress(
-              file_metadata, compressedData, selectedColumnIndices);
+          decompressedTable = btrblocks::ArrowColumnwiseTableCompressor::decompress(file_metadata, compressedData, selectedColumnIndices);
         },
         "decompression_time");
+    
+    state.counters["num_columns"] = selectedColumnIndices.size();
 
     /*shared_ptr<arrow::Table> originalTable;
     measure(

@@ -1,10 +1,15 @@
 #pragma once
 // -------------------------------------------------------------------------------------
+#include <fcntl.h>
+#include <sys/mman.h>
+#include <unistd.h>
 #include <cmath>
 #include <cstring>
 #include <fstream>
+#include <vector>
 // -------------------------------------------------------------------------------------
 #include "common/Units.hpp"
+#include "storage/MMapVector.hpp"
 // -------------------------------------------------------------------------------------
 namespace btrblocks {
 // -------------------------------------------------------------------------------------
@@ -157,6 +162,25 @@ class Utils {
       perror(msg.c_str());
       throw Generic_Exception(msg);
     }
+  }
+
+  static std::vector<u8> mmapFile(const std::string& path) {
+    int fd = open(path.c_str(), O_RDWR);
+    if (fd == -1) {
+        std::cerr << "Failed to open file\n";
+    }
+
+    // Get the size of the file
+    off_t size = lseek(fd, 0, SEEK_END);
+    lseek(fd, 0, SEEK_SET); // Reset file pointer
+
+    // Map the file into memory
+    char* addr = static_cast<char*>(mmap(nullptr, size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0));
+    if (addr == MAP_FAILED) {
+        std::cerr << "mmap failed\n";
+    }
+
+    return {addr, addr + size};
   }
 };
 // -------------------------------------------------------------------------------------

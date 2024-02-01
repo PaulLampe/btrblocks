@@ -4,6 +4,7 @@
 #include <iterator>
 #include <memory>
 #include <vector>
+#include "arrow/ArrowMetaData.hpp"
 #include "arrow/chunkwise/ArrowChunkwiseTableCompressor.hpp"
 #include "arrow/columnwise/ArrowColumnwiseTableCompressor.hpp"
 #include "test-cases/TestHelper.hpp"
@@ -64,7 +65,7 @@ void checkCompressTableColumnwise(std::shared_ptr<arrow::Table>& table) {
     }
   }
 
-  auto decompressedOutput = ArrowColumnwiseTableCompressor::decompress(fileMeta.get(), writtenParts, columnIndices);
+  auto decompressedOutput = ArrowColumnwiseTableCompressor::decompress(fileMeta, writtenParts, columnIndices);
 
   // TODO: Save column name in meta
   for (int i = 0; i < table->schema()->num_fields(); ++i) {
