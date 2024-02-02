@@ -58,8 +58,7 @@ vector<vector<vector<u8>>> LocalArrowReader::mmapColumns(vector<SIZE>& columnInd
 
 vector<vector<tuple<SIZE, SIZE>>> LocalArrowReader::resolveOffsets(vector<SIZE>& columnIndices) {
   vector<vector<tuple<SIZE, SIZE>>> offsets(
-      metadata.numChunks, vector<tuple<SIZE, SIZE>>(
-                              metadata.numColumns));  // row_group_i -> column_i -> part_i + chunk_i
+      metadata.numChunks, vector<tuple<SIZE, SIZE>>(columnIndices.size()));  // row_group_i -> column_i -> part_i + chunk_i
 
   SIZE column_i = 0;
 
