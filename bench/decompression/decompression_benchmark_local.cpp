@@ -22,6 +22,7 @@
 #include "common/Utils.hpp"
 #include "compression/Datablock.hpp"
 #include "scheme/SchemePool.hpp"
+#include "arrow/columnwise/ArrowColumnwiseTableCompressor.hpp"
 
 namespace btrbench {
 using namespace std;
