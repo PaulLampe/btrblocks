@@ -28,11 +28,11 @@ ExternalProject_Get_Property(tbb_src source_dir)
 ExternalProject_Get_Property(tbb_src binary_dir)
 
 set(TBB_INCLUDE_DIR ${source_dir}/include)
-set(TBB_LIBRARY_PATH ${binary_dir}/libtbb.so)
+set(TBB_LIBRARY_PATH ${binary_dir}/libtbb.a)
 
 file(MAKE_DIRECTORY ${TBB_INCLUDE_DIR})
 
-add_library(tbb SHARED IMPORTED)
+add_library(tbb STATIC IMPORTED)
 add_dependencies(tbb tbb_src)
 
 set_property(TARGET tbb PROPERTY IMPORTED_LOCATION ${TBB_LIBRARY_PATH})
