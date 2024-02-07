@@ -27,6 +27,17 @@ TEST(LocalArrowScan, ReadMetaData) {
   std::cout << reader.getSchema()->ToString() << "\n";
 }
 
+/*
+SELECT
+  "Medicare1_1"."SPECIALTY_DESC" AS "SPECIALTY_DESC",
+  AVG(CAST("Medicare1_1"."Calculation_3170826185505725" AS double)) AS
+"avg:Calculation_3170826185505725:ok" FROM "Medicare1_1"
+
+GROUP BY "Medicare1_1"."SPECIALTY_DESC"
+ORDER BY "avg:Calculation_3170826185505725:ok"
+DESC LIMIT 15;
+*/
+
 TEST(LocalArrowScan, Scan) {
   btrblocks::LocalArrowReader reader(folder);
 
