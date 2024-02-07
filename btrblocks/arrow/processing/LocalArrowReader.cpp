@@ -12,6 +12,7 @@
 #include "../ArrowTypeUtils.hpp"
 #include "../columnwise/ArrowColumn.hpp"
 #include "../columnwise/ArrowColumnChunkDecompressor.hpp"
+#include "arrow/ArrowMetaData.hpp"
 #include "common/Units.hpp"
 #include "common/Utils.hpp"
 #include "compression/Datablock.hpp"
@@ -101,6 +102,10 @@ shared_ptr<arrow::Schema> LocalArrowReader::getSchema() {
   iota(columnIndices.begin(), columnIndices.end(), 0);
 
   return resolveSchema(columnIndices);
+}
+
+ArrowMetaData LocalArrowReader::getMetaData() {
+  return metadata;
 }
 
 void LocalArrowReader::scan(const vector<string>& columns,

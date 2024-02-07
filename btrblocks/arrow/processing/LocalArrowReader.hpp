@@ -27,6 +27,7 @@ public:
   void scan(const vector<string>& columns, const function<void(shared_ptr<arrow::RecordBatch>)>& callback);
 
   shared_ptr<arrow::Schema> getSchema();
+  ArrowMetaData getMetaData();
 
 private:
 
