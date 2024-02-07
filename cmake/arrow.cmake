@@ -26,7 +26,7 @@ ExternalProject_Add(
 # Prepare arrow
 ExternalProject_Get_Property(arrow_src install_dir)
 set(ARROW_INCLUDE_DIR ${install_dir}/include)
-set(ARROW_LIBRARY_PATH ${install_dir}/lib/libarrow.a)
+set(ARROW_LIBRARY_PATH ${install_dir}/lib/libarrow_bundled_dependencies.a)
 file(MAKE_DIRECTORY ${ARROW_INCLUDE_DIR})
 
 add_library(Arrow STATIC IMPORTED)
