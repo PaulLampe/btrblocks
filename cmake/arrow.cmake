@@ -38,6 +38,10 @@ add_library(Parquet STATIC IMPORTED)
 set_property(TARGET Parquet PROPERTY IMPORTED_LOCATION ${ARROW_PARQUET_LIBRARY_PATH})
 set_property(TARGET Parquet APPEND PROPERTY INTERFACE_INCLUDE_DIRECTORIES ${ARROW_INCLUDE_DIR})
 
+set(THREADS_PREFER_PTHREAD_FLAG ON)
+find_package(Threads REQUIRED)
+target_link_libraries(Arrow INTERFACE Threads::Threads)
+target_link_libraries(Parquet INTERFACE Threads::Threads)
 
 # Dependencies
 add_dependencies(Arrow arrow_src)
