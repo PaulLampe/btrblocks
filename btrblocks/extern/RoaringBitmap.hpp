@@ -1,6 +1,6 @@
 #pragma once
 // -------------------------------------------------------------------------------------
-#include <arrow/array/array_base.h>
+#include <arrow/api.h>
 #include "common/Units.hpp"
 // -------------------------------------------------------------------------------------
 #include <boost/dynamic_bitset.hpp>

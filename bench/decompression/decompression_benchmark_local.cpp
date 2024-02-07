@@ -1,6 +1,5 @@
 #include <arrow/api.h>
 #include <arrow/io/file.h>
-#include <arrow/table.h>
 #include <oneapi/tbb/detail/_machine.h>
 #include <parquet/arrow/reader.h>
 #include <tbb/parallel_for.h>
