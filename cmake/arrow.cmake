@@ -39,3 +39,4 @@ set_property(TARGET Parquet APPEND PROPERTY INTERFACE_INCLUDE_DIRECTORIES ${ARRO
 
 # Dependencies
 add_dependencies(Arrow arrow_src)
+add_dependencies(Parquet arrow_src)
