@@ -43,7 +43,7 @@ set(CMAKE_VENDOR_DIR "${CMAKE_SOURCE_DIR}/cmake/")
 
 #Arrow
 
-# include("${CMAKE_VENDOR_DIR}/arrow.cmake")
+include("${CMAKE_VENDOR_DIR}/arrow.cmake")
 
 # Compression library dependencies
 include("${CMAKE_VENDOR_DIR}/fastpfor.cmake")
