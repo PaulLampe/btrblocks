@@ -27,6 +27,7 @@ ExternalProject_Get_Property(arrow_src install_dir)
 set(ARROW_INCLUDE_DIR ${install_dir}/include)
 set(ARROW_LIBRARY_PATH ${install_dir}/lib/libarrow.so)
 set(ARROW_PARQUET_LIBRARY_PATH ${install_dir}/lib/libparquet.so)
+
 file(MAKE_DIRECTORY ${ARROW_INCLUDE_DIR})
 add_library(Arrow SHARED IMPORTED)
 set_property(TARGET Arrow PROPERTY IMPORTED_LOCATION ${ARROW_LIBRARY_PATH})
