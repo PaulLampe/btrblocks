@@ -66,7 +66,7 @@ if (CMAKE_BUILD_TYPE MATCHES Debug)
 endif ()
 target_compile_options(btrblocks PUBLIC -Wno-unused-parameter)
 
-target_link_libraries(btrblocks Threads::Threads fsst fastpfor croaring dynamic_bitset tbb Arrow) #asan
+target_link_libraries(btrblocks PUBLIC Threads::Threads fsst fastpfor roaring dynamic_bitset tbb Arrow) #asan
 
 if (${WITH_LOGGING})
     target_link_libraries(btrblocks spdlog)
@@ -93,7 +93,7 @@ install(TARGETS btrblocks
 
 install(DIRECTORY ${BTR_PUBLIC_INCLUDE_DIR}
     DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}"
-    FILES_MATCHING PATTERN "*.h" PATTERN "*.hpp")
+    FILES_MATCHING PATTERN "*.h" PATTERN "*.hpp" PATTERN "*.hh")
 
 # ---------------------------------------------------------------------------
 # Linting

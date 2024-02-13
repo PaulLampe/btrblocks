@@ -2,32 +2,19 @@
 # btrblocks
 # ---------------------------------------------------------------------------
 
-include(ExternalProject)
-find_package(Git REQUIRED)
+include(FetchContent)
 
-# Get croaring
-ExternalProject_Add(
-    croaring_src
-    PREFIX "vendor/croaring"
-    GIT_REPOSITORY "https://github.com/RoaringBitmap/CRoaring.git"
-    GIT_TAG b88b002407b42fafaea23ea5009a54a24d1c1ed4
-    TIMEOUT 10
-    CMAKE_ARGS
-        -DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR}/vendor/croaring
-        -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}
-        -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
-        -DCMAKE_CXX_FLAGS=${CMAKE_CXX_FLAGS}
-    UPDATE_COMMAND ""
-)
+FetchContent_Declare(
+        roaring
+        GIT_REPOSITORY https://github.com/RoaringBitmap/CRoaring.git
+        GIT_TAG v2.0.4
+        GIT_SHALLOW TRUE)
 
-# Prepare croaring
-ExternalProject_Get_Property(croaring_src install_dir)
-set(CROARING_INCLUDE_DIR ${install_dir}/include)
-set(CROARING_LIBRARY_PATH ${install_dir}/lib/libroaring.so)
-file(MAKE_DIRECTORY ${CROARING_INCLUDE_DIR})
-add_library(croaring SHARED IMPORTED)
-set_property(TARGET croaring PROPERTY IMPORTED_LOCATION ${CROARING_LIBRARY_PATH})
-set_property(TARGET croaring APPEND PROPERTY INTERFACE_INCLUDE_DIRECTORIES ${CROARING_INCLUDE_DIR})
+set(ENABLE_ROARING_TESTS OFF CACHE INTERNAL "")
 
-# Dependencies
-add_dependencies(croaring croaring_src)
+set(ROARING_BUILD_STATIC ON CACHE INTERNAL "")
+FetchContent_MakeAvailable(roaring)
+
+FetchContent_GetProperties(roaring)
+SET(CPP_ROARING_HEADERS ${roaring_SOURCE_DIR}/cpp/roaring64map.hh  ${roaring_SOURCE_DIR}/cpp/roaring.hh)
+file(COPY ${CPP_ROARING_HEADERS} DESTINATION ${roaring_SOURCE_DIR}/include/roaring)

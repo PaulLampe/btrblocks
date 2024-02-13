@@ -10,6 +10,8 @@
 // -------------------------------------------------------------------------------------
 // -------------------------------------------------------------------------------------
 namespace btrblocks::legacy::strings {
+
+using namespace roaring;
 // -------------------------------------------------------------------------------------
 double OneValue::expectedCompressionRatio(StringStats& stats, u8 allowed_cascading_level) {
   if (stats.distinct_values.size() <= 1) {

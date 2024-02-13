@@ -13,6 +13,8 @@
 // -------------------------------------------------------------------------------------
 namespace btrblocks::doubles {
 
+using namespace roaring;
+
 const u32 max_exponent = 22;
 const u8 exponent_exception_code = 23;
 const u8 decimal_index_mask = 0x1F;
