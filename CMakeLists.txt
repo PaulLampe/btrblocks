@@ -39,7 +39,7 @@ include("cmake/clang-tidy.cmake") # Integrate clang-tidy
 find_package(Threads REQUIRED)
 set(THREADS_PREFER_PTHREAD_FLAG ON)
 
-set(CMAKE_VENDOR_DIR "${CMAKE_PROJECT_DIR}/cmake/")
+set(CMAKE_VENDOR_DIR "${PROJECT_SOURCE_DIR}/cmake/")
 
 #Arrow
 
@@ -72,11 +72,11 @@ include("${CMAKE_VENDOR_DIR}/lz4.cmake")
 # Components
 # ---------------------------------------------------------------------------
 
-include("${CMAKE_PROJECT_DIR}/btrblocks/local.cmake")  # btrblocks library
-include("${CMAKE_PROJECT_DIR}/btrfiles/local.cmake")   # btrblocks files library
-include("${CMAKE_PROJECT_DIR}/test/local.cmake")       # btrblocks tests
-include("${CMAKE_PROJECT_DIR}/bench/local.cmake")      # btrblocks tests
-include("${CMAKE_PROJECT_DIR}/tools/local.cmake")      # btrblocks tooling
+include("${PROJECT_SOURCE_DIR}/btrblocks/local.cmake")  # btrblocks library
+include("${PROJECT_SOURCE_DIR}/btrfiles/local.cmake")   # btrblocks files library
+include("${PROJECT_SOURCE_DIR}/test/local.cmake")       # btrblocks tests
+include("${PROJECT_SOURCE_DIR}/bench/local.cmake")      # btrblocks tests
+include("${PROJECT_SOURCE_DIR}/tools/local.cmake")      # btrblocks tooling
 
 # ---------------------------------------------------------------------------
 # Linting
