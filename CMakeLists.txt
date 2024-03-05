@@ -13,6 +13,7 @@ option(WITH_LOGGING "WITH_LOGGING" OFF)
 option(SAMPLING_TEST_MODE "SAMPLING_TEST_MODE" OFF)
 option(ENABLE_FOR_SCHEME "ENABLE_FOR_SCHEME" OFF)
 option(BUILD_SHARED_LIBRARY "BUILD_SHARED_LIBRARY" OFF)
+option(BUILD_ARROW "BUILD_ARROW" OFF)
 
 # -------------------------------------------------------------------------------
 # C++ build options
@@ -42,8 +43,9 @@ set(THREADS_PREFER_PTHREAD_FLAG ON)
 set(CMAKE_VENDOR_DIR "${PROJECT_SOURCE_DIR}/cmake/")
 
 #Arrow
-
-# include("${CMAKE_VENDOR_DIR}/arrow.cmake")
+if (${BUILD_ARROW})
+include("${CMAKE_VENDOR_DIR}/arrow.cmake")
+endif()
 
 # Compression library dependencies
 include("${CMAKE_VENDOR_DIR}/fastpfor.cmake")
