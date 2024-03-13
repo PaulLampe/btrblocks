@@ -15,10 +15,10 @@ file(GLOB_RECURSE TEST_CASES ${BTR_TEST_CASES_DIR}/**.cpp ${BTR_TEST_CASES_DIR}/
 # Tester
 # ---------------------------------------------------------------------------
 
-add_executable(tester ${BTR_TEST_DIR}/tester.cpp ${TEST_CASES})
-target_link_libraries(tester btrblocks gtest gmock Threads::Threads Arrow Parquet tbb)
-target_include_directories(tester PRIVATE ${BTR_INCLUDE_DIR})
-target_include_directories(tester PRIVATE ${BTR_TEST_DIR})
+add_executable(btr_tester ${BTR_TEST_DIR}/tester.cpp ${TEST_CASES})
+target_link_libraries(btr_tester btrblocks gtest gmock Threads::Threads Arrow Parquet tbb)
+target_include_directories(btr_tester PRIVATE ${BTR_INCLUDE_DIR})
+target_include_directories(btr_tester PRIVATE ${BTR_TEST_DIR})
 
 enable_testing()
 

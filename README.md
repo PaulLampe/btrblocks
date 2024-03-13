@@ -34,7 +34,7 @@ Then, depending on your usecase, build only the library or any of the tools:
 - build everything: `make`
 - install static library and headers on your system: `sudo make install`
 - build the compression library only: `make btrblocks`
-- build the tests `make tester`
+- build the tests `make btr_tester`
 - build the in-memory decompression speed benchmark: `make decompression_speed`
 - ...
 
