@@ -22,7 +22,8 @@ using namespace std;
 template <>
 SIZE ArrowColumnChunkCompressor<ColumnType::STRING>::getChunkByteSize(
     const shared_ptr<arrow::Array>& chunk) {
-      return static_pointer_cast<arrow::StringArray>(chunk)->total_values_length();
+  auto array = static_pointer_cast<arrow::StringArray>(chunk);
+  return array->total_values_length() + array->length() * (sizeof(u32) + 1);
 }
 
 template <>
@@ -32,7 +33,7 @@ SIZE ArrowColumnChunkCompressor<ColumnType::STRING>::compress(const shared_ptr<a
 
   auto array = std::static_pointer_cast<arrow::StringArray>(chunk);
 
-  auto dataSize = array->value_offsets()->size() + array->total_values_length();
+  auto dataSize = (array->length() + 1) * sizeof(u32) + array->total_values_length();
 
   StringStats stats = StringStats::generateArrowStats(array, dataSize);
 

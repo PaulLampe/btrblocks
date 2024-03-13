@@ -73,7 +73,7 @@ std::tuple<OutputBlockStats, std::vector<u8>> ArrowTableChunkCompressor::compres
 
       auto array = std::static_pointer_cast<arrow::StringArray>(column);
 
-      auto dataSize = array->value_offsets()->size() + array->total_values_length();
+      auto dataSize = (array->length() + 1) * sizeof(u32) + array->total_values_length();
 
       StringStats stats = StringStats::generateArrowStats(array, dataSize);
 
