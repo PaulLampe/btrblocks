@@ -19,7 +19,7 @@
 #include "btrblocks.hpp"
 #include "gtest/gtest.h"
 
-const std::string folder = "parquet-to-btr";
+const std::string folder = "data/medicare1_1";
 
 TEST(LocalArrowScan, ReadMetaData) {
   btrblocks::LocalArrowReader reader(folder);
@@ -43,16 +43,12 @@ TEST(LocalArrowScan, Scan) {
 
   tbb::enumerable_thread_specific<double> sums;
 
-  reader.scan({"specialtydesc", "calculation3170826185505725"},[&](const std::shared_ptr<arrow::RecordBatch>& batch) {
-    double sum = 0;
-
-    auto calc = std::static_pointer_cast<arrow::DoubleArray>(batch->column(1));
+  reader.scan({"specialtydesc"},[&](const std::shared_ptr<arrow::RecordBatch>& batch) {
+    auto desc = std::static_pointer_cast<arrow::StringArray>(batch->column(0));
 
     for (int64_t i = 0; i < batch->num_rows(); ++i) {
-      sum += calc->Value(i);
+      std::cout << desc->GetString(i) <<"\n";
     }
-
-    sums.local() += sum;
   });
 
   double sum = 0;
