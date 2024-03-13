@@ -12,6 +12,7 @@
 #include "compression/Datablock.hpp"
 #include "compression/SchemePicker.hpp"
 #include "extern/RoaringBitmap.hpp"
+#include "scheme/SchemeType.hpp"
 #include "storage/StringArrayViewer.hpp"
 #include "storage/StringPointerArrayViewer.hpp"
 
@@ -40,12 +41,19 @@ SIZE ArrowColumnChunkCompressor<ColumnType::STRING>::compress(const shared_ptr<a
   StringScheme& preferred_scheme =
       StringSchemePicker::chooseScheme(stats, config.strings.max_cascade_depth);
 
-  meta->compression_type = static_cast<u8>(preferred_scheme.schemeType());
-
   auto arrowStringArrayViewer = ArrowStringArrayViewer(array);
 
-  auto compressedColumnSize = preferred_scheme.compress(
-      arrowStringArrayViewer, array->null_bitmap_data(), meta->data, stats);
+  u32 compressedColumnSize = 0;
+
+  meta->compression_type = static_cast<u8>(preferred_scheme.schemeType());
+
+  if (preferred_scheme.schemeType() == StringSchemeType::UNCOMPRESSED) {
+    // Uncompressed string arrow arrays are not completely compatible, therefore here have to provide the values in the StringArrayViewer format
+    arrowStringArrayViewer.transformToRegularStringArrayViewer();
+  }
+
+  compressedColumnSize = preferred_scheme.compress(arrowStringArrayViewer,
+                                                   array->null_bitmap_data(), meta->data, stats);
 
   return compressedColumnSize;
 }
@@ -57,7 +65,8 @@ shared_ptr<arrow::Array> ArrowColumnChunkCompressor<ColumnType::STRING>::decompr
 
   const auto used_compression_scheme = static_cast<StringSchemeType>(columnChunk->compression_type);
 
-  auto& scheme = SchemePool::available_schemes->string_schemes[used_compression_scheme];
+  unique_ptr<StringScheme>& scheme =
+      SchemePool::available_schemes->string_schemes[used_compression_scheme];
 
   auto size =
       scheme->getDecompressedSizeNoCopy(columnChunk->data, columnChunk->tuple_count, nullptr);
@@ -67,8 +76,8 @@ shared_ptr<arrow::Array> ArrowColumnChunkCompressor<ColumnType::STRING>::decompr
   auto bitmap = decompressBitmap(columnChunk);
   auto bitmapData = bitmap == nullptr ? nullptr : bitmap->data();
 
-  // TODO: Write a wrapper to turn the string pointer arrays to different arrow array types (DictArray, REE Array, etc.) so we dont have
-  // to build these huge copied arrays 
+  // TODO: Write a wrapper to turn the string pointer arrays to different arrow array types
+  // (DictArray, REE Array, etc.) so we dont have to build these huge copied arrays
   scheme->decompressNoCopy(destination.get(), nullptr, columnChunk->data, tupleCount, 0);
 
   auto pointerViewer = StringPointerArrayViewer(destination.get());
