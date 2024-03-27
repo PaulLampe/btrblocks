@@ -16,21 +16,9 @@
 #include "common/Utils.hpp"
 #include "compression/Datablock.hpp"
 #include "storage/Chunk.hpp"
+#include "MetaDataUtils.hpp"
 
 namespace btrblocks {
-
-vector<SIZE> LocalArrowReader::resolveColumnIndices(const vector<string>& columns) {
-  vector<SIZE> columnIndices{};
-
-  for (auto& column : columns) {
-    auto columnIndex = find_if(metadata.columnMeta.begin(), metadata.columnMeta.end(),
-                               [&](const auto& columnMeta) { return columnMeta.name == column; });
-
-    columnIndices.push_back(columnIndex - metadata.columnMeta.begin());
-  }
-
-  return columnIndices;
-}
 
 vector<vector<vector<u8>>> LocalArrowReader::mmapColumns(vector<SIZE>& columnIndices) {
   vector<vector<vector<u8>>> output{columnIndices.size()};
@@ -82,38 +70,25 @@ vector<vector<tuple<SIZE, SIZE>>> LocalArrowReader::resolveOffsets(vector<SIZE>&
   return offsets;
 }
 
-shared_ptr<arrow::Schema> LocalArrowReader::resolveSchema(vector<SIZE>& columnIndices) {
-  arrow::FieldVector fields{};
-
-  for (auto& columnIndex : columnIndices) {
-    auto columnMeta = metadata.columnMeta[columnIndex];
-
-    fields.push_back(
-        arrow::field(columnMeta.name, ArrowTypeUtils::arrowTypeFromColumnType(columnMeta.type)));
-  }
-
-  return arrow::schema(fields);
-}
-
 shared_ptr<arrow::Schema> LocalArrowReader::getSchema() {
   vector<SIZE> columnIndices(metadata.numColumns);
 
   iota(columnIndices.begin(), columnIndices.end(), 0);
 
-  return resolveSchema(columnIndices);
+  return MetaDataUtils::resolveSchema(metadata, columnIndices);
 }
 
 void LocalArrowReader::scan(const vector<string>& columns,
                             const function<void(shared_ptr<arrow::RecordBatch>)>& callback) {
   auto numColumnsToDecompress = columns.size();
 
-  auto columnIndices = resolveColumnIndices(columns);
+  auto columnIndices = MetaDataUtils::resolveColumnIndices(metadata, columns);
 
   auto columnParts = mmapColumns(columnIndices);
 
   auto chunkOffsets = resolveOffsets(columnIndices);
 
-  auto schema = resolveSchema(columnIndices);
+  auto schema = MetaDataUtils::resolveSchema(metadata, columnIndices);
 
   tbb::blocked_range<u32> range(0, metadata.numChunks);
 

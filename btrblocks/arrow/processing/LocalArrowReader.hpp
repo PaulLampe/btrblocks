@@ -34,13 +34,10 @@ private:
   string folder;
 
   vector<vector<vector<u8>>> mmapColumns(vector<SIZE>& columnIndices);
-  vector<SIZE> resolveColumnIndices(const vector<string>& columns);
 
   // Resolves which part and at which position each column chunk of a row group is
   // row_group_i -> column_i -> part_i + chunk_i
   vector<vector<tuple<SIZE, SIZE>>> resolveOffsets(vector<SIZE>& columnIndices);
-
-  shared_ptr<arrow::Schema> resolveSchema(vector<SIZE>& columnIndices);
 };
 
 

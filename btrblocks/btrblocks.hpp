@@ -12,6 +12,7 @@
 #include "compression/Datablock.hpp"
 #include "arrow/processing/LocalArrowReader.hpp"
 #include "arrow/ArrowWriter.hpp"
+#include "arrow/processing/MetaDataUtils.hpp"
 #include "scheme/SchemeConfig.hpp"
 #include "scheme/SchemeType.hpp"
 #include "scheme/SchemePool.hpp"
