@@ -19,6 +19,7 @@ using PartInternalOffset = size_t;
 using CompressedDataType = std::span<uint8_t>;
 
 class ArrowRowGroupDecompressor {
+ public:
   static shared_ptr<arrow::RecordBatch> decompressRowGroup(
       shared_ptr<arrow::Schema>& schema,
       unordered_map<ColumnIndex, std::pair<CompressedDataType, PartInternalOffset>> columnData) {
