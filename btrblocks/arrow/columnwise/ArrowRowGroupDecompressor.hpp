@@ -22,7 +22,7 @@ class ArrowRowGroupDecompressor {
  public:
   static shared_ptr<arrow::RecordBatch> decompressRowGroup(
       shared_ptr<arrow::Schema>& schema,
-      unordered_map<ColumnIndex, std::pair<CompressedDataType, PartInternalOffset>> columnData) {
+      map<ColumnIndex, std::pair<CompressedDataType, PartInternalOffset>> columnData) {
     auto numColumnsToDecompress = columnData.size();
 
     arrow::ArrayVector columns(numColumnsToDecompress);
